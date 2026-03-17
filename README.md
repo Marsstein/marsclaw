@@ -1,16 +1,14 @@
 <p align="center">
-  <h1 align="center">LiteClaw</h1>
-  <p align="center">
-    <strong>Lightweight, secure, multi-agent AI runtime</strong>
-  </p>
-  <p align="center">
-    <a href="#quick-start">Quick Start</a> ·
-    <a href="#features">Features</a> ·
-    <a href="#comparison">Comparison</a> ·
-    <a href="#configuration">Configuration</a> ·
-    <a href="#architecture">Architecture</a> ·
-    <a href="#roadmap">Roadmap</a>
-  </p>
+  <img src="assets/banner.svg" alt="LiteClaw" width="100%"/>
+</p>
+
+<p align="center">
+  <a href="#quick-start">Quick Start</a> ·
+  <a href="#features">Features</a> ·
+  <a href="#comparison">Comparison</a> ·
+  <a href="#configuration">Configuration</a> ·
+  <a href="#architecture">Architecture</a> ·
+  <a href="#roadmap">Roadmap</a>
 </p>
 
 ---

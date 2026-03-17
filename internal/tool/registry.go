@@ -34,5 +34,6 @@ func DefaultRegistry(workDir string) *Registry {
 	r.Register(ShellDef(), ShellTool{WorkDir: workDir})
 	r.Register(ListFilesDef(), ListFilesTool{})
 	r.Register(SearchDef(), SearchTool{})
+	r.Register(GitDef(), GitTool{WorkDir: workDir})
 	return r
 }

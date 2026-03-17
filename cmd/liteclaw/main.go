@@ -14,12 +14,14 @@ import (
 	"github.com/marsstein/liteclaw/internal/agent"
 	"github.com/marsstein/liteclaw/internal/config"
 	"github.com/marsstein/liteclaw/internal/discord"
+	"github.com/marsstein/liteclaw/internal/hooks"
 	"github.com/marsstein/liteclaw/internal/llm"
 	"github.com/marsstein/liteclaw/internal/mcp"
 	"github.com/marsstein/liteclaw/internal/memory"
 	"github.com/marsstein/liteclaw/internal/scheduler"
 	"github.com/marsstein/liteclaw/internal/security"
 	"github.com/marsstein/liteclaw/internal/server"
+	"github.com/marsstein/liteclaw/internal/setup"
 	"github.com/marsstein/liteclaw/internal/slack"
 	"github.com/marsstein/liteclaw/internal/store"
 	tgbot "github.com/marsstein/liteclaw/internal/telegram"
@@ -45,6 +47,7 @@ type CLI struct {
 	Telegram TelegramCmd `cmd:"" help:"Run as a Telegram bot."`
 	Discord  DiscordCmd  `cmd:"" help:"Run as a Discord bot."`
 	Slack    SlackCmd    `cmd:"" help:"Run as a Slack bot."`
+	Init     InitCmd     `cmd:"" help:"Interactive setup wizard."`
 }
 
 type ChatCmd struct {
@@ -67,6 +70,8 @@ type SlackCmd struct {
 	BotToken string `help:"Slack bot token (xoxb-)." env:"SLACK_BOT_TOKEN" required:""`
 	AppToken string `help:"Slack app token (xapp-)." env:"SLACK_APP_TOKEN"`
 }
+
+type InitCmd struct{}
 
 func main() {
 	cli := CLI{}
@@ -176,22 +181,33 @@ func run(kongCtx *kong.Context, cli *CLI) error {
 		cost.SetDailyLimit(cfg.Cost.DailyBudget)
 	}
 
+	// Discover project-level SOUL.md / AGENTS.md.
+	soulPrompt, agentPrompt := agent.DiscoverProjectPrompts(cwd)
+	if soulPrompt != "" {
+		logger.Info("discovered SOUL.md")
+	} else {
+		soulPrompt = defaultSoul
+	}
+
 	switch kongCtx.Command() {
+	case "init":
+		return setup.RunWizard()
 	case "serve":
-		return runServe(cli, cfg, model, logger, registry, safetyChecker, cost, agentCfg)
+		return runServe(cli, cfg, model, logger, registry, safetyChecker, cost, agentCfg, soulPrompt, agentPrompt)
 	case "telegram":
-		return runTelegram(cli, cfg, model, logger, registry, safetyChecker, cost, agentCfg)
+		return runTelegram(cli, cfg, model, logger, registry, safetyChecker, cost, agentCfg, soulPrompt)
 	case "discord":
-		return runDiscord(cli, cfg, model, logger, registry, safetyChecker, cost, agentCfg)
+		return runDiscord(cli, cfg, model, logger, registry, safetyChecker, cost, agentCfg, soulPrompt)
 	case "slack":
-		return runSlack(cli, cfg, model, logger, registry, safetyChecker, cost, agentCfg)
+		return runSlack(cli, cfg, model, logger, registry, safetyChecker, cost, agentCfg, soulPrompt)
 	default:
-		return runChat(cli, cfg, model, logger, registry, safetyChecker, cost, agentCfg)
+		return runChat(cli, cfg, model, logger, registry, safetyChecker, cost, agentCfg, soulPrompt, agentPrompt)
 	}
 }
 
 func runChat(cli *CLI, cfg *config.Config, model string, logger *slog.Logger,
-	registry *tool.Registry, safety *security.SafetyChecker, cost *llm.CostTracker, agentCfg agent.AgentConfig) error {
+	registry *tool.Registry, safety *security.SafetyChecker, cost *llm.CostTracker, agentCfg agent.AgentConfig,
+	soul, agentPrompt string) error {
 
 	provider, err := createProvider(cfg, model)
 	if err != nil {
@@ -208,7 +224,7 @@ func runChat(cli *CLI, cfg *config.Config, model string, logger *slog.Logger,
 	)
 
 	if len(cli.Chat.Prompt) == 0 {
-		sess := terminal.NewSession(a, cost, model, defaultSoul)
+		sess := terminal.NewSession(a, cost, model, soul)
 		return sess.Run(context.Background())
 	}
 
@@ -217,8 +233,9 @@ func runChat(cli *CLI, cfg *config.Config, model string, logger *slog.Logger,
 	defer cancel()
 
 	parts := t.ContextParts{
-		SoulPrompt: defaultSoul,
-		History:    []t.Message{{Role: t.RoleUser, Content: prompt}},
+		SoulPrompt:  soul,
+		AgentPrompt: agentPrompt,
+		History:     []t.Message{{Role: t.RoleUser, Content: prompt}},
 	}
 
 	result := a.Run(runCtx, parts)
@@ -235,7 +252,8 @@ func runChat(cli *CLI, cfg *config.Config, model string, logger *slog.Logger,
 }
 
 func runServe(cli *CLI, cfg *config.Config, model string, logger *slog.Logger,
-	registry *tool.Registry, safety *security.SafetyChecker, cost *llm.CostTracker, agentCfg agent.AgentConfig) error {
+	registry *tool.Registry, safety *security.SafetyChecker, cost *llm.CostTracker, agentCfg agent.AgentConfig,
+	soul, agentPrompt string) error {
 
 	provider, err := createProvider(cfg, model)
 	if err != nil {
@@ -265,7 +283,7 @@ func runServe(cli *CLI, cfg *config.Config, model string, logger *slog.Logger,
 			VerifyToken:   cfg.WhatsApp.VerifyToken,
 			Provider:      provider,
 			Model:         model,
-			Soul:          defaultSoul,
+			Soul:          soul,
 			AgentCfg:      agentCfg,
 			Registry:      registry,
 			Safety:        safety,
@@ -279,7 +297,7 @@ func runServe(cli *CLI, cfg *config.Config, model string, logger *slog.Logger,
 		Addr:     cli.Serve.Addr,
 		Provider: provider,
 		Model:    model,
-		Soul:     defaultSoul,
+		Soul:     soul,
 		AgentCfg: agentCfg,
 		Registry: registry,
 		Safety:   safety,
@@ -298,7 +316,8 @@ func runServe(cli *CLI, cfg *config.Config, model string, logger *slog.Logger,
 }
 
 func runTelegram(cli *CLI, cfg *config.Config, model string, logger *slog.Logger,
-	registry *tool.Registry, safety *security.SafetyChecker, cost *llm.CostTracker, agentCfg agent.AgentConfig) error {
+	registry *tool.Registry, safety *security.SafetyChecker, cost *llm.CostTracker, agentCfg agent.AgentConfig,
+	soul string) error {
 
 	provider, err := createProvider(cfg, model)
 	if err != nil {
@@ -318,7 +337,7 @@ func runTelegram(cli *CLI, cfg *config.Config, model string, logger *slog.Logger
 		Token:    cli.Telegram.Token,
 		Provider: provider,
 		Model:    model,
-		Soul:     defaultSoul,
+		Soul:     soul,
 		AgentCfg: agentCfg,
 		Registry: registry,
 		Safety:   safety,
@@ -331,7 +350,8 @@ func runTelegram(cli *CLI, cfg *config.Config, model string, logger *slog.Logger
 }
 
 func runDiscord(cli *CLI, cfg *config.Config, model string, logger *slog.Logger,
-	registry *tool.Registry, safety *security.SafetyChecker, cost *llm.CostTracker, agentCfg agent.AgentConfig) error {
+	registry *tool.Registry, safety *security.SafetyChecker, cost *llm.CostTracker, agentCfg agent.AgentConfig,
+	soul string) error {
 
 	provider, err := createProvider(cfg, model)
 	if err != nil {
@@ -351,7 +371,7 @@ func runDiscord(cli *CLI, cfg *config.Config, model string, logger *slog.Logger,
 		Token:    cli.Discord.Token,
 		Provider: provider,
 		Model:    model,
-		Soul:     defaultSoul,
+		Soul:     soul,
 		AgentCfg: agentCfg,
 		Registry: registry,
 		Safety:   safety,
@@ -364,7 +384,8 @@ func runDiscord(cli *CLI, cfg *config.Config, model string, logger *slog.Logger,
 }
 
 func runSlack(cli *CLI, cfg *config.Config, model string, logger *slog.Logger,
-	registry *tool.Registry, safety *security.SafetyChecker, cost *llm.CostTracker, agentCfg agent.AgentConfig) error {
+	registry *tool.Registry, safety *security.SafetyChecker, cost *llm.CostTracker, agentCfg agent.AgentConfig,
+	soul string) error {
 
 	provider, err := createProvider(cfg, model)
 	if err != nil {
@@ -385,7 +406,7 @@ func runSlack(cli *CLI, cfg *config.Config, model string, logger *slog.Logger,
 		AppToken: cli.Slack.AppToken,
 		Provider: provider,
 		Model:    model,
-		Soul:     defaultSoul,
+		Soul:     soul,
 		AgentCfg: agentCfg,
 		Registry: registry,
 		Safety:   safety,
@@ -521,4 +542,5 @@ func createProvider(cfg *config.Config, model string) (t.Provider, error) {
 var (
 	_ = memory.NewManager
 	_ = (*whatsapp.Bot)(nil)
+	_ = (*hooks.Manager)(nil)
 )

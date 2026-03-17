@@ -1,0 +1,46 @@
+# LiteClaw configuration example
+# Copy to ~/.liteclaw/config.yaml
+
+providers:
+  default: anthropic
+  anthropic:
+    api_key_env: ANTHROPIC_API_KEY
+    default_model: claude-sonnet-4-20250514
+  openai:
+    api_key_env: OPENAI_API_KEY
+    default_model: gpt-4o
+  ollama:
+    default_model: llama3.1
+
+agent:
+  max_turns: 25
+  max_consecutive_tool_calls: 15
+  max_input_tokens: 180000
+  max_output_tokens: 16384
+  enable_streaming: true
+
+cost:
+  inline_display: true
+  daily_budget: 10.00
+
+security:
+  strict_approval: false
+  scan_credentials: true
+  path_traversal_guard: true
+  allowed_dirs:
+    - /home/user/projects
+
+# MCP servers (optional)
+# mcp:
+#   - name: filesystem
+#     command: npx
+#     args: ["-y", "@modelcontextprotocol/server-filesystem", "/home/user"]
+
+# Scheduled tasks (optional)
+# scheduler:
+#   tasks:
+#     - name: morning-summary
+#       schedule: "0 9 * * 1-5"
+#       prompt: "Summarize yesterday's git activity"
+#       channel: log
+#       enabled: true

@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: ['1.23', '1.24']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Build
+        run: go build ./cmd/liteclaw/
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./... -timeout 60s
+
+  binary-size:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Build stripped binary
+        run: go build -ldflags="-s -w" -o liteclaw ./cmd/liteclaw/
+
+      - name: Check binary size
+        run: |
+          SIZE=$(stat -f%z liteclaw 2>/dev/null || stat -c%s liteclaw)
+          echo "Binary size: $(numfmt --to=iec $SIZE)"
+          # Fail if binary exceeds 25MB stripped
+          if [ "$SIZE" -gt 26214400 ]; then
+            echo "Binary too large! Max: 25MB"
+            exit 1
+          fi

@@ -80,7 +80,7 @@ liteclaw slack
 | **Memory** | 200MB+ | <20MB | <15MB | **<50MB** |
 | **Startup** | 3-5s | <100ms | <50ms | **<200ms** |
 | **CVEs** | 512+ | 0 | 0 | **0** |
-| **LOC** | 430K | ~15K | ~10K | **~6K** |
+| **LOC** | 430K | ~15K | ~10K | **~6.5K** |
 | **Multi-agent** | No | No | No | **4 patterns** |
 | **Providers** | Anthropic | Anthropic | Anthropic | **3 (Anthropic/OpenAI/Ollama)** |
 | **Web UI** | Yes | No | No | **Built-in** |
@@ -120,6 +120,7 @@ Every step traced. Every error fed back to the model for self-correction. Never 
 | `shell` | Execute shell commands | High |
 | `list_files` | Directory listing with glob | Safe |
 | `search` | Regex search across files | Safe |
+| `git` | Read-only git (status, log, diff, blame) | Safe |
 
 ### Multi-Agent Orchestration
 
@@ -324,7 +325,8 @@ liteclaw/
 │   ├── store/              # SQLite session persistence
 │   ├── telegram/           # Telegram bot adapter
 │   ├── terminal/           # Interactive terminal UI
-│   ├── tool/               # Built-in tools (read/write/edit/shell/search)
+│   ├── setup/              # Interactive setup wizard
+│   ├── tool/               # Built-in tools (read/write/edit/shell/search/git)
 │   ├── types/              # Shared data structures
 │   └── whatsapp/           # WhatsApp Cloud API adapter
 ├── Taskfile.yaml           # Build tasks
@@ -388,13 +390,17 @@ task release:snapshot
 - [x] Safety rails (credential scanning, path traversal, tool approval)
 - [x] Context engineering (auto-trim, budget allocation)
 - [x] Sub-agent orchestrator
+- [x] SOUL.md / AGENTS.md auto-discovery
+- [x] Git-aware tools (status, log, diff, blame)
+- [x] Event hooks (pre/post tool, LLM, error)
+- [x] Setup wizard (`liteclaw init`)
 
 ### Next
 
-- [ ] AGENTS.md / SOUL.md file discovery
 - [ ] VS Code extension
 - [ ] Semantic memory search (embeddings)
 - [ ] Agent-driven memory (remember/recall tools)
+- [ ] Container sandbox for tool isolation
 
 ## License
 

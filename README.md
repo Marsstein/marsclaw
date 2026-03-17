@@ -15,7 +15,7 @@
 
 ---
 
-**13MB binary · <50MB RAM · Sub-second startup · Zero CVEs**
+**18MB binary · <50MB RAM · Sub-second startup · Zero CVEs**
 
 LiteClaw is a personal AI agent runtime written in Go. It connects to Claude, GPT, and local models to help you code, automate tasks, and orchestrate multi-agent workflows — all from a single binary with no dependencies.
 
@@ -63,6 +63,14 @@ liteclaw -m gpt-4o "explain this code"
 
 # Use with local Ollama (free, offline)
 liteclaw -m llama3.1 "explain this code"
+
+# Discord bot
+export DISCORD_BOT_TOKEN="..."
+liteclaw discord
+
+# Slack bot
+export SLACK_BOT_TOKEN="xoxb-..."
+liteclaw slack
 ```
 
 ## Comparison
@@ -74,11 +82,14 @@ liteclaw -m llama3.1 "explain this code"
 | **Memory** | 200MB+ | <20MB | <15MB | **<50MB** |
 | **Startup** | 3-5s | <100ms | <50ms | **<200ms** |
 | **CVEs** | 512+ | 0 | 0 | **0** |
-| **LOC** | 430K | ~15K | ~10K | **<5K** |
+| **LOC** | 430K | ~15K | ~10K | **~6K** |
 | **Multi-agent** | No | No | No | **4 patterns** |
 | **Providers** | Anthropic | Anthropic | Anthropic | **3 (Anthropic/OpenAI/Ollama)** |
 | **Web UI** | Yes | No | No | **Built-in** |
-| **Telegram** | No | No | No | **Built-in** |
+| **Chat adapters** | No | No | No | **6 (CLI/Web/Telegram/Discord/Slack/WhatsApp)** |
+| **MCP client** | No | No | No | **Built-in** |
+| **Scheduled tasks** | No | No | No | **Cron + intervals** |
+| **Persistent memory** | No | No | No | **SQLite-backed** |
 | **Session persistence** | No | No | No | **SQLite** |
 | **Cost tracking** | No | No | No | **Built-in** |
 | **Credential scanning** | No | No | No | **Yes** |
@@ -125,13 +136,62 @@ Four production-ready patterns — **no other lightweight alternative has any**:
 
 Each sub-agent runs its own loop with isolated history, tools, and safety checks.
 
-### Three Ways to Access
+### Six Ways to Access
 
 | Mode | Command | Use Case |
 |------|---------|----------|
 | **CLI** | `liteclaw "prompt"` | Terminal power users |
 | **Web UI** | `liteclaw serve` | Any browser, any device, phone at night |
 | **Telegram** | `liteclaw telegram` | Chat from your phone, no browser needed |
+| **Discord** | `liteclaw discord` | Team channels, community support |
+| **Slack** | `liteclaw slack` | Workspace integration |
+| **WhatsApp** | via `liteclaw serve` | Webhook at `/webhook/whatsapp` |
+
+### MCP Client (Model Context Protocol)
+
+Connect to any MCP-compatible tool server. LiteClaw discovers tools automatically:
+
+```yaml
+mcp:
+  - name: filesystem
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-filesystem", "/home/user"]
+  - name: github
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-github"]
+    env: ["GITHUB_TOKEN=ghp_..."]
+```
+
+### Scheduled Tasks
+
+Run agent tasks on a schedule — cron syntax or simple intervals:
+
+```yaml
+scheduler:
+  tasks:
+    - name: daily-summary
+      schedule: "0 9 * * 1-5"
+      prompt: "Summarize yesterday's git commits"
+      channel: telegram:123456
+      enabled: true
+    - name: health-check
+      schedule: "every 30m"
+      prompt: "Check if the API is responding"
+      channel: log
+      enabled: true
+```
+
+### Persistent Memory
+
+Cross-session knowledge that survives restarts. Three memory tiers:
+
+| Tier | Purpose | Example |
+|------|---------|---------|
+| **Episodic** | Past events, summaries | "Yesterday we fixed the auth bug" |
+| **Semantic** | Facts, preferences | "User prefers TypeScript" |
+| **Procedural** | Workflows, patterns | "Deploy via: build → test → push" |
+
+Memory is SQLite-backed and bounded per tier to prevent unbounded growth.
 
 ### Three LLM Providers
 
@@ -209,6 +269,30 @@ security:
   path_traversal_guard: true
   allowed_dirs:
     - /home/user/projects
+
+mcp:
+  - name: filesystem
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-filesystem", "."]
+
+scheduler:
+  tasks:
+    - name: standup
+      schedule: "0 9 * * 1-5"
+      prompt: "What changed in git since yesterday?"
+      channel: log
+      enabled: true
+
+discord:
+  token: ${DISCORD_BOT_TOKEN}
+
+slack:
+  bot_token: ${SLACK_BOT_TOKEN}
+
+whatsapp:
+  phone_number_id: "123456"
+  access_token: ${WHATSAPP_ACCESS_TOKEN}
+  verify_token: my-verify-token
 ```
 
 All settings can be overridden with environment variables: `LITECLAW_AGENT_MAX_TURNS=50`.
@@ -233,12 +317,18 @@ liteclaw/
 │   ├── llm/                # Provider abstraction (Anthropic, OpenAI, Ollama)
 │   ├── orchestration/      # Multi-agent patterns (supervisor, pipeline, parallel, debate)
 │   ├── security/           # Safety checker, credential scanner
+│   ├── discord/            # Discord bot adapter
+│   ├── mcp/                # MCP client (JSON-RPC 2.0 over stdio)
+│   ├── memory/             # Persistent memory (3-tier, SQLite-backed)
+│   ├── scheduler/          # Cron-like task scheduler
 │   ├── server/             # HTTP server + embedded Web UI
+│   ├── slack/              # Slack bot adapter
 │   ├── store/              # SQLite session persistence
 │   ├── telegram/           # Telegram bot adapter
 │   ├── terminal/           # Interactive terminal UI
 │   ├── tool/               # Built-in tools (read/write/edit/shell/search)
-│   └── types/              # Shared data structures
+│   ├── types/              # Shared data structures
+│   └── whatsapp/           # WhatsApp Cloud API adapter
 ├── Taskfile.yaml           # Build tasks
 ├── .goreleaser.yaml        # Cross-platform releases
 └── .golangci.yml           # Linter config
@@ -288,6 +378,12 @@ task release:snapshot
 - [x] Interactive terminal mode
 - [x] Web UI (single binary, access from any device)
 - [x] Telegram bot adapter
+- [x] Discord bot adapter
+- [x] Slack bot adapter
+- [x] WhatsApp Cloud API adapter
+- [x] MCP client (connect to any MCP tool server)
+- [x] Scheduled tasks (cron + interval syntax)
+- [x] Persistent memory (3-tier, SQLite-backed)
 - [x] Session persistence (SQLite)
 - [x] Multi-agent patterns (supervisor, pipeline, parallel, debate)
 - [x] Cost tracking (microdollar accounting)
@@ -297,11 +393,10 @@ task release:snapshot
 
 ### Next
 
-- [ ] Bounded memory (3-tier, 14K cap)
-- [ ] MCP client support
 - [ ] AGENTS.md / SOUL.md file discovery
-- [ ] Discord / Slack adapters
 - [ ] VS Code extension
+- [ ] Semantic memory search (embeddings)
+- [ ] Agent-driven memory (remember/recall tools)
 
 ## License
 

@@ -67,6 +67,9 @@ func (s *SQLiteStore) migrate() error {
 
 func (s *SQLiteStore) Close() error { return s.db.Close() }
 
+// DB returns the underlying database connection for shared use.
+func (s *SQLiteStore) DB() *sql.DB { return s.db }
+
 func (s *SQLiteStore) CreateSession(ctx context.Context, session *Session) error {
 	meta, _ := json.Marshal(session.Metadata)
 	_, err := s.db.ExecContext(ctx,

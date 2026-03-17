@@ -16,11 +16,16 @@ import (
 
 // Config is the top-level LiteClaw configuration.
 type Config struct {
-	Providers ProviderConfig `koanf:"providers"`
-	Agent     AgentConfig    `koanf:"agent"`
-	Memory    MemoryConfig   `koanf:"memory"`
-	Cost      CostConfig     `koanf:"cost"`
-	Security  SecurityConfig `koanf:"security"`
+	Providers  ProviderConfig   `koanf:"providers"`
+	Agent      AgentConfig      `koanf:"agent"`
+	Memory     MemoryConfig     `koanf:"memory"`
+	Cost       CostConfig       `koanf:"cost"`
+	Security   SecurityConfig   `koanf:"security"`
+	MCP        []MCPServerConfig `koanf:"mcp"`
+	Scheduler  SchedulerConfig  `koanf:"scheduler"`
+	Discord    *DiscordConfig   `koanf:"discord"`
+	Slack      *SlackConfig     `koanf:"slack"`
+	WhatsApp   *WhatsAppConfig  `koanf:"whatsapp"`
 }
 
 // ProviderConfig holds LLM provider settings.
@@ -81,6 +86,47 @@ type SecurityConfig struct {
 	ScanCredentials    bool     `koanf:"scan_credentials"`
 	PathTraversalGuard bool     `koanf:"path_traversal_guard"`
 	AllowedDirs        []string `koanf:"allowed_dirs"`
+}
+
+// MCPServerConfig defines an MCP server connection.
+type MCPServerConfig struct {
+	Name    string   `koanf:"name"`
+	Command string   `koanf:"command"`
+	Args    []string `koanf:"args"`
+	Env     []string `koanf:"env"`
+}
+
+// SchedulerConfig holds scheduled task definitions.
+type SchedulerConfig struct {
+	Tasks []ScheduledTaskConfig `koanf:"tasks"`
+}
+
+// ScheduledTaskConfig defines a single scheduled task.
+type ScheduledTaskConfig struct {
+	ID       string `koanf:"id"`
+	Name     string `koanf:"name"`
+	Schedule string `koanf:"schedule"` // "every 30m" or "0 9 * * 1-5"
+	Prompt   string `koanf:"prompt"`
+	Channel  string `koanf:"channel"` // "telegram:chatid", "discord:channelid", "log"
+	Enabled  bool   `koanf:"enabled"`
+}
+
+// DiscordConfig configures the Discord bot.
+type DiscordConfig struct {
+	Token string `koanf:"token"`
+}
+
+// SlackConfig configures the Slack bot.
+type SlackConfig struct {
+	BotToken string `koanf:"bot_token"`
+	AppToken string `koanf:"app_token"`
+}
+
+// WhatsAppConfig configures the WhatsApp bot.
+type WhatsAppConfig struct {
+	PhoneNumberID string `koanf:"phone_number_id"`
+	AccessToken   string `koanf:"access_token"`
+	VerifyToken   string `koanf:"verify_token"`
 }
 
 // defaults returns the default config as a map.

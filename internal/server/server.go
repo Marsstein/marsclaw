@@ -60,6 +60,11 @@ func New(cfg Config) *Server {
 	return s
 }
 
+// Mount adds an external handler at the given pattern.
+func (s *Server) Mount(pattern string, handler http.Handler) {
+	s.mux.Handle(pattern, handler)
+}
+
 // ListenAndServe starts the HTTP server.
 func (s *Server) ListenAndServe(ctx context.Context) error {
 	srv := &http.Server{

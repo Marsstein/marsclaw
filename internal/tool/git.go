@@ -8,7 +8,7 @@ import (
 	"os/exec"
 	"strings"
 
-	t "github.com/marsstein/liteclaw/internal/types"
+	t "github.com/marsstein/marsclaw/internal/types"
 )
 
 // GitTool provides safe, read-only git operations.

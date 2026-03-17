@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/marsstein/liteclaw/internal/agent"
-	"github.com/marsstein/liteclaw/internal/store"
-	t "github.com/marsstein/liteclaw/internal/types"
+	"github.com/marsstein/marsclaw/internal/agent"
+	"github.com/marsstein/marsclaw/internal/store"
+	t "github.com/marsstein/marsclaw/internal/types"
 )
 
 // Task is a recurring scheduled job.

@@ -14,7 +14,7 @@ import (
 	"github.com/knadh/koanf/v2"
 )
 
-// Config is the top-level LiteClaw configuration.
+// Config is the top-level MarsClaw configuration.
 type Config struct {
 	Providers  ProviderConfig   `koanf:"providers"`
 	Agent      AgentConfig      `koanf:"agent"`
@@ -181,9 +181,9 @@ func Load(path string) (*Config, error) {
 		}
 	}
 
-	// 3. Environment variables (LITECLAW_AGENT_MAX_TURNS → agent.max_turns).
-	if err := k.Load(env.Provider("LITECLAW_", ".", func(s string) string {
-		s = strings.TrimPrefix(s, "LITECLAW_")
+	// 3. Environment variables (MARSCLAW_AGENT_MAX_TURNS → agent.max_turns).
+	if err := k.Load(env.Provider("MARSCLAW_", ".", func(s string) string {
+		s = strings.TrimPrefix(s, "MARSCLAW_")
 		s = strings.ToLower(s)
 		s = strings.ReplaceAll(s, "_", ".")
 		return s
@@ -201,5 +201,5 @@ func Load(path string) (*Config, error) {
 
 func defaultConfigPath() string {
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".liteclaw", "config.yaml")
+	return filepath.Join(home, ".marsclaw", "config.yaml")
 }

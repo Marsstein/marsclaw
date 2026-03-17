@@ -11,7 +11,7 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	t "github.com/marsstein/liteclaw/internal/types"
+	t "github.com/marsstein/marsclaw/internal/types"
 )
 
 // SQLiteStore implements Store using a local SQLite database.

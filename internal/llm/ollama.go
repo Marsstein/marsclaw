@@ -3,7 +3,7 @@ package llm
 import (
 	"context"
 
-	t "github.com/marsstein/liteclaw/internal/types"
+	t "github.com/marsstein/marsclaw/internal/types"
 )
 
 // OllamaProvider implements types.Provider using Ollama's OpenAI-compatible API.

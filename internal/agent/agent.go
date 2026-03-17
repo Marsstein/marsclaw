@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/marsstein/liteclaw/internal/llm"
+	"github.com/marsstein/marsclaw/internal/llm"
 )
 
 // AgentConfig controls the agent loop behavior.

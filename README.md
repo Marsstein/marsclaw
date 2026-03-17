@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.svg" alt="LiteClaw" width="100%"/>
+  <img src="assets/banner.svg" alt="MarsClaw" width="100%"/>
 </p>
 
 <p align="center">
@@ -15,10 +15,10 @@
 
 **18MB binary · <50MB RAM · Sub-second startup · Zero CVEs**
 
-LiteClaw is a personal AI agent runtime written in Go. It connects to Claude, GPT, and local models to help you code, automate tasks, and orchestrate multi-agent workflows — all from a single binary with no dependencies.
+MarsClaw is a personal AI agent runtime written in Go. It connects to Claude, GPT, and local models to help you code, automate tasks, and orchestrate multi-agent workflows — all from a single binary with no dependencies.
 
 ```
-$ liteclaw "add error handling to main.go"
+$ marsclaw "add error handling to main.go"
 
 ⚡ read_file
 ✓ read_file
@@ -34,46 +34,46 @@ Added error wrapping with fmt.Errorf to all three return paths in main().
 
 ```bash
 # Install
-go install github.com/marsstein/liteclaw/cmd/liteclaw@latest
+go install github.com/marsstein/marsclaw/cmd/marsclaw@latest
 
 # Or download a binary
-curl -sSfL https://liteclaw.dev/install.sh | sh
+curl -sSfL https://marsclaw.dev/install.sh | sh
 
 # Set your API key
 export ANTHROPIC_API_KEY="sk-ant-..."
 
 # Interactive mode
-liteclaw
+marsclaw
 
 # Single prompt
-liteclaw "explain this codebase"
+marsclaw "explain this codebase"
 
 # Web UI (access from any device)
-liteclaw serve --addr :8080
+marsclaw serve --addr :8080
 
 # Telegram bot
 export TELEGRAM_BOT_TOKEN="..."
-liteclaw telegram
+marsclaw telegram
 
 # Use with OpenAI
 export OPENAI_API_KEY="sk-..."
-liteclaw -m gpt-4o "explain this code"
+marsclaw -m gpt-4o "explain this code"
 
 # Use with local Ollama (free, offline)
-liteclaw -m llama3.1 "explain this code"
+marsclaw -m llama3.1 "explain this code"
 
 # Discord bot
 export DISCORD_BOT_TOKEN="..."
-liteclaw discord
+marsclaw discord
 
 # Slack bot
 export SLACK_BOT_TOKEN="xoxb-..."
-liteclaw slack
+marsclaw slack
 ```
 
 ## Comparison
 
-|  | OpenClaw | PicoClaw | ZeroClaw | **LiteClaw** |
+|  | OpenClaw | PicoClaw | ZeroClaw | **MarsClaw** |
 |---|---------|----------|----------|:------------:|
 | **Language** | TypeScript | Go | Rust | **Go** |
 | **Binary** | npm install | 8MB | 3.4MB | **18MB** |
@@ -139,16 +139,16 @@ Each sub-agent runs its own loop with isolated history, tools, and safety checks
 
 | Mode | Command | Use Case |
 |------|---------|----------|
-| **CLI** | `liteclaw "prompt"` | Terminal power users |
-| **Web UI** | `liteclaw serve` | Any browser, any device, phone at night |
-| **Telegram** | `liteclaw telegram` | Chat from your phone, no browser needed |
-| **Discord** | `liteclaw discord` | Team channels, community support |
-| **Slack** | `liteclaw slack` | Workspace integration |
-| **WhatsApp** | via `liteclaw serve` | Webhook at `/webhook/whatsapp` |
+| **CLI** | `marsclaw "prompt"` | Terminal power users |
+| **Web UI** | `marsclaw serve` | Any browser, any device, phone at night |
+| **Telegram** | `marsclaw telegram` | Chat from your phone, no browser needed |
+| **Discord** | `marsclaw discord` | Team channels, community support |
+| **Slack** | `marsclaw slack` | Workspace integration |
+| **WhatsApp** | via `marsclaw serve` | Webhook at `/webhook/whatsapp` |
 
 ### MCP Client (Model Context Protocol)
 
-Connect to any MCP-compatible tool server. LiteClaw discovers tools automatically:
+Connect to any MCP-compatible tool server. MarsClaw discovers tools automatically:
 
 ```yaml
 mcp:
@@ -243,7 +243,7 @@ Following Anthropic's production guidelines:
 ## Configuration
 
 ```yaml
-# ~/.liteclaw/config.yaml
+# ~/.marsclaw/config.yaml
 
 providers:
   default: anthropic
@@ -294,7 +294,7 @@ whatsapp:
   verify_token: my-verify-token
 ```
 
-All settings can be overridden with environment variables: `LITECLAW_AGENT_MAX_TURNS=50`.
+All settings can be overridden with environment variables: `MARSCLAW_AGENT_MAX_TURNS=50`.
 
 ## Interactive Commands
 
@@ -302,14 +302,14 @@ All settings can be overridden with environment variables: `LITECLAW_AGENT_MAX_T
 /help      Show available commands
 /clear     Clear conversation history
 /history   Show message history
-/quit      Exit LiteClaw
+/quit      Exit MarsClaw
 ```
 
 ## Architecture
 
 ```
-liteclaw/
-├── cmd/liteclaw/           # CLI entrypoint (kong)
+marsclaw/
+├── cmd/marsclaw/           # CLI entrypoint (kong)
 ├── internal/
 │   ├── agent/              # Agent loop, context builder, sub-agent orchestrator
 │   ├── config/             # YAML config (koanf)
@@ -342,7 +342,7 @@ types ← llm
 types ← tool
 types ← agent ← security (via interface)
 types ← terminal ← agent
-cmd/liteclaw ← all of the above
+cmd/marsclaw ← all of the above
 ```
 
 ## Development
@@ -393,7 +393,7 @@ task release:snapshot
 - [x] SOUL.md / AGENTS.md auto-discovery
 - [x] Git-aware tools (status, log, diff, blame)
 - [x] Event hooks (pre/post tool, LLM, error)
-- [x] Setup wizard (`liteclaw init`)
+- [x] Setup wizard (`marsclaw init`)
 
 ### Next
 

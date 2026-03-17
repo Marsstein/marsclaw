@@ -11,11 +11,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/marsstein/liteclaw/internal/agent"
-	"github.com/marsstein/liteclaw/internal/security"
-	"github.com/marsstein/liteclaw/internal/store"
-	"github.com/marsstein/liteclaw/internal/tool"
-	t "github.com/marsstein/liteclaw/internal/types"
+	"github.com/marsstein/marsclaw/internal/agent"
+	"github.com/marsstein/marsclaw/internal/security"
+	"github.com/marsstein/marsclaw/internal/store"
+	"github.com/marsstein/marsclaw/internal/tool"
+	t "github.com/marsstein/marsclaw/internal/types"
 )
 
 const graphAPI = "https://graph.facebook.com/v21.0"

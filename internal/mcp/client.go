@@ -10,7 +10,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	t "github.com/marsstein/liteclaw/internal/types"
+	t "github.com/marsstein/marsclaw/internal/types"
 )
 
 // Client connects to an MCP server via stdio (JSON-RPC 2.0).
@@ -111,7 +111,7 @@ func (c *Client) initialize(ctx context.Context) error {
 		"protocolVersion": "2024-11-05",
 		"capabilities":    map[string]any{},
 		"clientInfo": map[string]any{
-			"name":    "liteclaw",
+			"name":    "marsclaw",
 			"version": "1.0.0",
 		},
 	})

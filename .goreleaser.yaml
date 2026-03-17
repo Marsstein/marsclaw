@@ -1,6 +1,6 @@
 version: 2
 
-project_name: liteclaw
+project_name: marsclaw
 
 before:
   hooks:
@@ -8,8 +8,8 @@ before:
     - go generate ./...
 
 builds:
-  - main: ./cmd/liteclaw
-    binary: liteclaw
+  - main: ./cmd/marsclaw
+    binary: marsclaw
     env:
       - CGO_ENABLED=0
     goos:
@@ -46,15 +46,15 @@ brews:
   - repository:
       owner: marsstein
       name: homebrew-tap
-    homepage: https://liteclaw.dev
+    homepage: https://marsclaw.dev
     description: Lightweight, secure, multi-agent AI runtime
     license: Apache-2.0
     install: |
-      bin.install "liteclaw"
+      bin.install "marsclaw"
 
 nfpms:
-  - package_name: liteclaw
-    homepage: https://liteclaw.dev
+  - package_name: marsclaw
+    homepage: https://marsclaw.dev
     description: Lightweight, secure, multi-agent AI runtime
     license: Apache-2.0
     formats:
@@ -63,8 +63,8 @@ nfpms:
 
 dockers:
   - image_templates:
-      - 'ghcr.io/marsstein/liteclaw:{{ .Version }}'
-      - 'ghcr.io/marsstein/liteclaw:latest'
+      - 'ghcr.io/marsstein/marsclaw:{{ .Version }}'
+      - 'ghcr.io/marsstein/marsclaw:latest'
     dockerfile: Dockerfile
     build_flag_templates:
       - '--platform=linux/amd64'

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	t "github.com/marsstein/liteclaw/internal/types"
+	t "github.com/marsstein/marsclaw/internal/types"
 )
 
 // MCPExecutor adapts an MCP client's tools as ToolExecutors.

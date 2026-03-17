@@ -1,6 +1,6 @@
 package tool
 
-import t "github.com/marsstein/liteclaw/internal/types"
+import t "github.com/marsstein/marsclaw/internal/types"
 
 // Registry holds available tools and their executors.
 type Registry struct {

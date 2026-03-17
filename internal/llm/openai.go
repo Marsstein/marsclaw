@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"strings"
 
-	t "github.com/marsstein/liteclaw/internal/types"
+	t "github.com/marsstein/marsclaw/internal/types"
 )
 
 // OpenAIProvider implements types.Provider for OpenAI-compatible APIs.

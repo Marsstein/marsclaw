@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	t "github.com/marsstein/liteclaw/internal/types"
+	t "github.com/marsstein/marsclaw/internal/types"
 )
 
 // Event identifies when a hook fires.

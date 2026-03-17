@@ -11,24 +11,24 @@ import (
 
 	"github.com/alecthomas/kong"
 
-	"github.com/marsstein/liteclaw/internal/agent"
-	"github.com/marsstein/liteclaw/internal/config"
-	"github.com/marsstein/liteclaw/internal/discord"
-	"github.com/marsstein/liteclaw/internal/hooks"
-	"github.com/marsstein/liteclaw/internal/llm"
-	"github.com/marsstein/liteclaw/internal/mcp"
-	"github.com/marsstein/liteclaw/internal/memory"
-	"github.com/marsstein/liteclaw/internal/scheduler"
-	"github.com/marsstein/liteclaw/internal/security"
-	"github.com/marsstein/liteclaw/internal/server"
-	"github.com/marsstein/liteclaw/internal/setup"
-	"github.com/marsstein/liteclaw/internal/slack"
-	"github.com/marsstein/liteclaw/internal/store"
-	tgbot "github.com/marsstein/liteclaw/internal/telegram"
-	"github.com/marsstein/liteclaw/internal/terminal"
-	"github.com/marsstein/liteclaw/internal/tool"
-	t "github.com/marsstein/liteclaw/internal/types"
-	"github.com/marsstein/liteclaw/internal/whatsapp"
+	"github.com/marsstein/marsclaw/internal/agent"
+	"github.com/marsstein/marsclaw/internal/config"
+	"github.com/marsstein/marsclaw/internal/discord"
+	"github.com/marsstein/marsclaw/internal/hooks"
+	"github.com/marsstein/marsclaw/internal/llm"
+	"github.com/marsstein/marsclaw/internal/mcp"
+	"github.com/marsstein/marsclaw/internal/memory"
+	"github.com/marsstein/marsclaw/internal/scheduler"
+	"github.com/marsstein/marsclaw/internal/security"
+	"github.com/marsstein/marsclaw/internal/server"
+	"github.com/marsstein/marsclaw/internal/setup"
+	"github.com/marsstein/marsclaw/internal/slack"
+	"github.com/marsstein/marsclaw/internal/store"
+	tgbot "github.com/marsstein/marsclaw/internal/telegram"
+	"github.com/marsstein/marsclaw/internal/terminal"
+	"github.com/marsstein/marsclaw/internal/tool"
+	t "github.com/marsstein/marsclaw/internal/types"
+	"github.com/marsstein/marsclaw/internal/whatsapp"
 )
 
 var (
@@ -42,7 +42,7 @@ type CLI struct {
 	Verbose bool             `help:"Enable debug logging." short:"v"`
 	Version kong.VersionFlag `help:"Print version."`
 
-	Chat     ChatCmd     `cmd:"" default:"withargs" help:"Chat with LiteClaw (interactive or single prompt)."`
+	Chat     ChatCmd     `cmd:"" default:"withargs" help:"Chat with MarsClaw (interactive or single prompt)."`
 	Serve    ServeCmd    `cmd:"" help:"Start the HTTP server with Web UI."`
 	Telegram TelegramCmd `cmd:"" help:"Run as a Telegram bot."`
 	Discord  DiscordCmd  `cmd:"" help:"Run as a Discord bot."`
@@ -76,9 +76,9 @@ type InitCmd struct{}
 func main() {
 	cli := CLI{}
 	ctx := kong.Parse(&cli,
-		kong.Name("liteclaw"),
+		kong.Name("marsclaw"),
 		kong.Description("Lightweight, secure, multi-agent AI runtime."),
-		kong.Vars{"version": fmt.Sprintf("liteclaw %s (%s)", version, commit)},
+		kong.Vars{"version": fmt.Sprintf("marsclaw %s (%s)", version, commit)},
 	)
 
 	if err := run(ctx, &cli); err != nil {
@@ -87,7 +87,7 @@ func main() {
 	}
 }
 
-const defaultSoul = `You are LiteClaw, a fast and capable AI coding assistant.
+const defaultSoul = `You are MarsClaw, a fast and capable AI coding assistant.
 
 Rules:
 - Be concise and direct. Lead with the answer.
@@ -311,7 +311,7 @@ func runServe(cli *CLI, cfg *config.Config, model string, logger *slog.Logger,
 		logger.Info("whatsapp webhook mounted at /webhook/whatsapp")
 	}
 
-	fmt.Fprintf(os.Stderr, "\033[1m\033[36mLiteClaw server running at http://localhost%s\033[0m\n", cli.Serve.Addr)
+	fmt.Fprintf(os.Stderr, "\033[1m\033[36mMarsClaw server running at http://localhost%s\033[0m\n", cli.Serve.Addr)
 	return srv.ListenAndServe(ctx)
 }
 
@@ -456,7 +456,7 @@ func runScheduler(ctx context.Context, cfg *config.Config, provider t.Provider,
 
 func openStore() (*store.SQLiteStore, error) {
 	home, _ := os.UserHomeDir()
-	dbPath := filepath.Join(home, ".liteclaw", "liteclaw.db")
+	dbPath := filepath.Join(home, ".marsclaw", "marsclaw.db")
 	return store.NewSQLite(dbPath)
 }
 

@@ -7,11 +7,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/marsstein/liteclaw/internal/agent"
-	"github.com/marsstein/liteclaw/internal/security"
-	"github.com/marsstein/liteclaw/internal/store"
-	"github.com/marsstein/liteclaw/internal/tool"
-	t "github.com/marsstein/liteclaw/internal/types"
+	"github.com/marsstein/marsclaw/internal/agent"
+	"github.com/marsstein/marsclaw/internal/security"
+	"github.com/marsstein/marsclaw/internal/store"
+	"github.com/marsstein/marsclaw/internal/tool"
+	t "github.com/marsstein/marsclaw/internal/types"
 )
 
 // BotConfig configures the Telegram bot.
@@ -90,7 +90,7 @@ func (b *Bot) handleMessage(ctx context.Context, msg *TGMessage) {
 	// Handle commands.
 	switch text {
 	case "/start":
-		b.client.SendMessage(ctx, chatID, "Welcome to LiteClaw! Send me any message and I'll help you.")
+		b.client.SendMessage(ctx, chatID, "Welcome to MarsClaw! Send me any message and I'll help you.")
 		return
 	case "/clear":
 		b.mu.Lock()

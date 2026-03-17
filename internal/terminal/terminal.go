@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/marsstein/liteclaw/internal/agent"
-	t "github.com/marsstein/liteclaw/internal/types"
+	"github.com/marsstein/marsclaw/internal/agent"
+	t "github.com/marsstein/marsclaw/internal/types"
 )
 
 const (
@@ -146,7 +146,7 @@ func (s *Session) printHelp() {
   /help      Show this help
   /clear     Clear conversation history
   /history   Show message history
-  /quit      Exit LiteClaw
+  /quit      Exit MarsClaw
 
 %sAvailable tools:%s read_file, write_file, edit_file, shell, list_files, search
 `, colorBold, colorReset, colorBold, colorReset)

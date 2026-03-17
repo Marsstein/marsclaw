@@ -1,13 +1,13 @@
-# Contributing to LiteClaw
+# Contributing to MarsClaw
 
-Thanks for your interest in contributing! LiteClaw is a lightweight AI agent runtime, and we value contributions that keep it that way — small, fast, and clean.
+Thanks for your interest in contributing! MarsClaw is a lightweight AI agent runtime, and we value contributions that keep it that way — small, fast, and clean.
 
 ## Getting Started
 
 ```bash
-git clone https://github.com/marsstein/liteclaw.git
-cd liteclaw
-go build ./cmd/liteclaw/
+git clone https://github.com/marsstein/marsclaw.git
+cd marsclaw
+go build ./cmd/marsclaw/
 ```
 
 Requirements: Go 1.23+
@@ -34,7 +34,7 @@ Open an issue describing the use case. We prioritize features that:
 1. Fork the repo
 2. Create a branch: `git checkout -b my-feature`
 3. Make your changes
-4. Run checks: `go vet ./... && go build ./cmd/liteclaw/`
+4. Run checks: `go vet ./... && go build ./cmd/marsclaw/`
 5. Commit with a clear message
 6. Open a PR against `main`
 

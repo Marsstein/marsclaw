@@ -9,6 +9,6 @@
 ## Checklist
 
 - [ ] `go vet ./...` passes
-- [ ] `go build ./cmd/liteclaw/` succeeds
+- [ ] `go build ./cmd/marsclaw/` succeeds
 - [ ] No new dependencies added (or justified)
 - [ ] Binary size not significantly increased

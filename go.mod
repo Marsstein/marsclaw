@@ -1,4 +1,4 @@
-module github.com/marsstein/liteclaw
+module github.com/marsstein/marsclaw
 
 go 1.25.0
 

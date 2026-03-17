@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	t "github.com/marsstein/liteclaw/internal/types"
+	t "github.com/marsstein/marsclaw/internal/types"
 )
 
 // SafetyChecker validates tool calls and outputs.

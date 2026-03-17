@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/marsstein/liteclaw/internal/agent"
-	t "github.com/marsstein/liteclaw/internal/types"
+	"github.com/marsstein/marsclaw/internal/agent"
+	t "github.com/marsstein/marsclaw/internal/types"
 )
 
 // PipelineStage defines one agent in a sequential pipeline.

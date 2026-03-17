@@ -59,7 +59,7 @@
 
   <!-- Title -->
   <text x="640" y="410" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="72" font-weight="800" fill="white" letter-spacing="-2">
-    LiteClaw
+    MarsClaw
   </text>
 
   <!-- Subtitle -->
@@ -106,7 +106,7 @@
     <!-- Terminal text -->
     <text x="20" y="45" font-family="'SF Mono', 'Cascadia Code', 'Fira Code', monospace" font-size="14">
       <tspan fill="#8b949e">$</tspan>
-      <tspan fill="#e6edf3"> go install github.com/marsstein/liteclaw/cmd/liteclaw@latest</tspan>
+      <tspan fill="#e6edf3"> go install github.com/marsstein/marsclaw/cmd/marsclaw@latest</tspan>
     </text>
   </g>
 </svg>

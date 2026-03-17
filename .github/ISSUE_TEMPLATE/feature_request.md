@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest a feature for LiteClaw
+about: Suggest a feature for MarsClaw
 title: ''
 labels: enhancement
 assignees: ''

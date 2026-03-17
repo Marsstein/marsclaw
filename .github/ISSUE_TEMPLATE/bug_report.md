@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Report a bug in LiteClaw
+about: Report a bug in MarsClaw
 title: ''
 labels: bug
 assignees: ''
@@ -18,5 +18,5 @@ assignees: ''
 **Environment**
 - OS:
 - Go version:
-- LiteClaw version: (`liteclaw --version`)
+- MarsClaw version: (`marsclaw --version`)
 - Provider: (anthropic/openai/ollama)

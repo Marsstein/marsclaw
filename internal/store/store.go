@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	t "github.com/marsstein/liteclaw/internal/types"
+	t "github.com/marsstein/marsclaw/internal/types"
 )
 
 // Session represents a persistent conversation.

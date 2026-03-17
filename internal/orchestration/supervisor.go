@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/marsstein/liteclaw/internal/agent"
-	t "github.com/marsstein/liteclaw/internal/types"
+	"github.com/marsstein/marsclaw/internal/agent"
+	t "github.com/marsstein/marsclaw/internal/types"
 )
 
 // SupervisorConfig configures a supervisor pattern.

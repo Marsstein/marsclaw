@@ -2,7 +2,7 @@ package agent
 
 // Re-export types from the shared types package for convenience.
 // This allows callers to use agent.Message, agent.ToolCall, etc.
-import t "github.com/marsstein/liteclaw/internal/types"
+import t "github.com/marsstein/marsclaw/internal/types"
 
 type (
 	Role            = t.Role

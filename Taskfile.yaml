@@ -1,7 +1,7 @@
 version: '3'
 
 vars:
-  BINARY: liteclaw
+  BINARY: marsclaw
   VERSION:
     sh: git describe --tags --always --dirty 2>/dev/null || echo "dev"
   COMMIT:
@@ -19,7 +19,7 @@ tasks:
   build:
     desc: Build the binary
     cmds:
-      - go build -ldflags '{{.LDFLAGS}}' -o bin/{{.BINARY}} ./cmd/liteclaw
+      - go build -ldflags '{{.LDFLAGS}}' -o bin/{{.BINARY}} ./cmd/marsclaw
     sources:
       - '**/*.go'
     generates:
@@ -28,7 +28,7 @@ tasks:
   run:
     desc: Build and run with args
     cmds:
-      - go run -ldflags '{{.LDFLAGS}}' ./cmd/liteclaw {{.CLI_ARGS}}
+      - go run -ldflags '{{.LDFLAGS}}' ./cmd/marsclaw {{.CLI_ARGS}}
 
   test:
     desc: Run all tests
@@ -83,4 +83,4 @@ tasks:
   install:
     desc: Install to $GOPATH/bin
     cmds:
-      - go install -ldflags '{{.LDFLAGS}}' ./cmd/liteclaw
+      - go install -ldflags '{{.LDFLAGS}}' ./cmd/marsclaw

@@ -1,5 +1,5 @@
-# LiteClaw configuration example
-# Copy to ~/.liteclaw/config.yaml
+# MarsClaw configuration example
+# Copy to ~/.marsclaw/config.yaml
 
 providers:
   default: anthropic

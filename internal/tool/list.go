@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	t "github.com/marsstein/liteclaw/internal/types"
+	t "github.com/marsstein/marsclaw/internal/types"
 )
 
 type ListFilesTool struct{}

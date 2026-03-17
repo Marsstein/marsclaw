@@ -15,7 +15,7 @@
 
 **18MB binary · <50MB RAM · Sub-second startup · Zero CVEs**
 
-MarsClaw is a personal AI agent runtime written in Go. It connects to Claude, GPT, and local models to help you code, automate tasks, and orchestrate multi-agent workflows — all from a single binary with no dependencies.
+MarsClaw is a personal AI agent runtime written in Go. It connects to Claude, GPT, Gemini, and local models to help you code, automate tasks, and orchestrate multi-agent workflows — all from a single binary with no dependencies.
 
 ```
 $ marsclaw "add error handling to main.go"
@@ -39,8 +39,10 @@ go install github.com/marsstein/marsclaw/cmd/marsclaw@latest
 # Or download a binary
 curl -sSfL https://marsclaw.dev/install.sh | sh
 
-# Set your API key
-export ANTHROPIC_API_KEY="sk-ant-..."
+# Set your API key (pick one)
+export GEMINI_API_KEY="..."       # Google — use your GCP credits
+export ANTHROPIC_API_KEY="sk-ant-..."  # Anthropic
+export OPENAI_API_KEY="sk-..."         # OpenAI
 
 # Interactive mode
 marsclaw
@@ -55,11 +57,13 @@ marsclaw serve --addr :8080
 export TELEGRAM_BOT_TOKEN="..."
 marsclaw telegram
 
+# Use with Gemini (burns GCP credits, not a separate bill)
+marsclaw -m gemini-2.5-flash "explain this code"
+
 # Use with OpenAI
-export OPENAI_API_KEY="sk-..."
 marsclaw -m gpt-4o "explain this code"
 
-# Use with local Ollama (free, offline)
+# Use with local Ollama (free, fully offline)
 marsclaw -m llama3.1 "explain this code"
 
 # Discord bot
@@ -82,7 +86,7 @@ marsclaw slack
 | **CVEs** | 512+ | 0 | 0 | **0** |
 | **LOC** | 430K | ~15K | ~10K | **~6.5K** |
 | **Multi-agent** | No | No | No | **4 patterns** |
-| **Providers** | Anthropic | Anthropic | Anthropic | **3 (Anthropic/OpenAI/Ollama)** |
+| **Providers** | Anthropic | Anthropic | Anthropic | **4 (Anthropic/Gemini/OpenAI/Ollama)** |
 | **Web UI** | Yes | No | No | **Built-in** |
 | **Chat adapters** | No | No | No | **6 (CLI/Web/Telegram/Discord/Slack/WhatsApp)** |
 | **MCP client** | No | No | No | **Built-in** |
@@ -192,13 +196,14 @@ Cross-session knowledge that survives restarts. Three memory tiers:
 
 Memory is SQLite-backed and bounded per tier to prevent unbounded growth.
 
-### Three LLM Providers
+### Four LLM Providers
 
 | Provider | Models | Cost |
 |----------|--------|------|
 | **Anthropic** | Claude Sonnet/Opus/Haiku | API key |
+| **Google Gemini** | Gemini 2.5 Flash/Pro | GCP credits or API key |
 | **OpenAI** | GPT-4o, GPT-4o-mini | API key |
-| **Ollama** | Llama, Mistral, Phi, any | Free, local, offline |
+| **Ollama** | Llama, Mistral, Phi, any | Free, local, fully offline |
 
 ### Cost Tracking
 
@@ -246,7 +251,10 @@ Following Anthropic's production guidelines:
 # ~/.marsclaw/config.yaml
 
 providers:
-  default: anthropic
+  default: gemini  # use GCP credits
+  gemini:
+    api_key_env: GEMINI_API_KEY
+    default_model: gemini-2.5-flash
   anthropic:
     api_key_env: ANTHROPIC_API_KEY
     default_model: claude-sonnet-4-20250514
@@ -313,7 +321,7 @@ marsclaw/
 ├── internal/
 │   ├── agent/              # Agent loop, context builder, sub-agent orchestrator
 │   ├── config/             # YAML config (koanf)
-│   ├── llm/                # Provider abstraction (Anthropic, OpenAI, Ollama)
+│   ├── llm/                # Provider abstraction (Anthropic, Gemini, OpenAI, Ollama)
 │   ├── orchestration/      # Multi-agent patterns (supervisor, pipeline, parallel, debate)
 │   ├── security/           # Safety checker, credential scanner
 │   ├── discord/            # Discord bot adapter
@@ -372,8 +380,9 @@ task release:snapshot
 
 - [x] Core agent loop with streaming
 - [x] Anthropic Claude provider
+- [x] Google Gemini provider (uses GCP credits)
 - [x] OpenAI provider (GPT-4o, GPT-4o-mini, any OpenAI-compatible API)
-- [x] Ollama provider (local models, offline, free)
+- [x] Ollama provider (local models, fully offline, free)
 - [x] 6 built-in tools (read, write, edit, shell, list, search)
 - [x] Interactive terminal mode
 - [x] Web UI (single binary, access from any device)

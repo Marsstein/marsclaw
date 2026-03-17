@@ -29,17 +29,22 @@ func RunWizard() error {
 	// Provider selection.
 	fmt.Println("Which LLM provider?")
 	fmt.Println("  1) Anthropic (Claude)")
-	fmt.Println("  2) OpenAI (GPT)")
-	fmt.Println("  3) Ollama (local, free)")
+	fmt.Println("  2) Google Gemini (uses GCP credits)")
+	fmt.Println("  3) OpenAI (GPT)")
+	fmt.Println("  4) Ollama (local, free, offline)")
 	provider := prompt(reader, "Choice [1]: ", "1")
 
 	var providerName, model, envKey string
 	switch provider {
 	case "2":
+		providerName = "gemini"
+		model = prompt(reader, "Model [gemini-2.5-flash]: ", "gemini-2.5-flash")
+		envKey = "GEMINI_API_KEY"
+	case "3":
 		providerName = "openai"
 		model = prompt(reader, "Model [gpt-4o]: ", "gpt-4o")
 		envKey = "OPENAI_API_KEY"
-	case "3":
+	case "4":
 		providerName = "ollama"
 		model = prompt(reader, "Model [llama3.1]: ", "llama3.1")
 	default:
@@ -64,6 +69,10 @@ func RunWizard() error {
 	switch providerName {
 	case "anthropic":
 		b.WriteString("  anthropic:\n")
+		b.WriteString(fmt.Sprintf("    api_key_env: %s\n", envKey))
+		b.WriteString(fmt.Sprintf("    default_model: %s\n", model))
+	case "gemini":
+		b.WriteString("  gemini:\n")
 		b.WriteString(fmt.Sprintf("    api_key_env: %s\n", envKey))
 		b.WriteString(fmt.Sprintf("    default_model: %s\n", model))
 	case "openai":

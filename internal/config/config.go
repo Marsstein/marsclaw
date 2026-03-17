@@ -33,6 +33,7 @@ type ProviderConfig struct {
 	Default   string                     `koanf:"default"`
 	Anthropic *AnthropicProviderConfig   `koanf:"anthropic"`
 	OpenAI    *OpenAIProviderConfig      `koanf:"openai"`
+	Gemini    *GeminiProviderConfig      `koanf:"gemini"`
 	Ollama    *OllamaProviderConfig      `koanf:"ollama"`
 }
 
@@ -44,6 +45,11 @@ type AnthropicProviderConfig struct {
 type OpenAIProviderConfig struct {
 	APIKeyEnv    string `koanf:"api_key_env"`
 	BaseURL      string `koanf:"base_url"`
+	DefaultModel string `koanf:"default_model"`
+}
+
+type GeminiProviderConfig struct {
+	APIKeyEnv    string `koanf:"api_key_env"`
 	DefaultModel string `koanf:"default_model"`
 }
 

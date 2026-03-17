@@ -472,6 +472,11 @@ func resolveModel(cfg *config.Config) string {
 			return cfg.Providers.OpenAI.DefaultModel
 		}
 		return "gpt-4o"
+	case "gemini":
+		if cfg.Providers.Gemini != nil && cfg.Providers.Gemini.DefaultModel != "" {
+			return cfg.Providers.Gemini.DefaultModel
+		}
+		return "gemini-2.5-flash"
 	case "ollama":
 		if cfg.Providers.Ollama != nil && cfg.Providers.Ollama.DefaultModel != "" {
 			return cfg.Providers.Ollama.DefaultModel
@@ -525,6 +530,17 @@ func createProvider(cfg *config.Config, model string) (t.Provider, error) {
 			baseURL = cfg.Providers.OpenAI.BaseURL
 		}
 		return llm.NewOpenAIProvider(apiKey, baseURL, model), nil
+
+	case "gemini":
+		envKey := "GEMINI_API_KEY"
+		if cfg.Providers.Gemini != nil && cfg.Providers.Gemini.APIKeyEnv != "" {
+			envKey = cfg.Providers.Gemini.APIKeyEnv
+		}
+		apiKey := os.Getenv(envKey)
+		if apiKey == "" {
+			return nil, fmt.Errorf("set %s environment variable", envKey)
+		}
+		return llm.NewGeminiProvider(apiKey, model), nil
 
 	case "ollama":
 		baseURL := ""

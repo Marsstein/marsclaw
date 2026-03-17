@@ -119,6 +119,15 @@ func New(
 	return a
 }
 
+// AddTools dynamically adds tools to the agent (used by supervisor pattern).
+func (a *Agent) AddTools(defs []ToolDef, executors map[string]ToolExecutor) {
+	a.toolDefs = append(a.toolDefs, defs...)
+	for name, exec := range executors {
+		a.tools[name] = exec
+	}
+	a.contextBuilder = NewContextBuilder(a.provider, a.config, a.toolDefs)
+}
+
 // Run executes the full agent loop for a single user turn.
 func (a *Agent) Run(ctx context.Context, parts ContextParts) *RunResult {
 	start := time.Now()

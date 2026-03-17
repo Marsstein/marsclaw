@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 
 	"github.com/alecthomas/kong"
@@ -14,6 +15,9 @@ import (
 	"github.com/marsstein/liteclaw/internal/config"
 	"github.com/marsstein/liteclaw/internal/llm"
 	"github.com/marsstein/liteclaw/internal/security"
+	"github.com/marsstein/liteclaw/internal/server"
+	"github.com/marsstein/liteclaw/internal/store"
+	tgbot "github.com/marsstein/liteclaw/internal/telegram"
 	"github.com/marsstein/liteclaw/internal/terminal"
 	"github.com/marsstein/liteclaw/internal/tool"
 	t "github.com/marsstein/liteclaw/internal/types"
@@ -30,11 +34,21 @@ type CLI struct {
 	Verbose bool             `help:"Enable debug logging." short:"v"`
 	Version kong.VersionFlag `help:"Print version."`
 
-	Chat ChatCmd `cmd:"" default:"withargs" help:"Chat with LiteClaw (interactive or single prompt)."`
+	Chat     ChatCmd     `cmd:"" default:"withargs" help:"Chat with LiteClaw (interactive or single prompt)."`
+	Serve    ServeCmd    `cmd:"" help:"Start the HTTP server with Web UI."`
+	Telegram TelegramCmd `cmd:"" help:"Run as a Telegram bot."`
 }
 
 type ChatCmd struct {
 	Prompt []string `arg:"" optional:"" help:"Prompt to send. Omit for interactive mode."`
+}
+
+type ServeCmd struct {
+	Addr string `help:"Listen address." default:":8080" short:"a"`
+}
+
+type TelegramCmd struct {
+	Token string `help:"Telegram bot token." env:"TELEGRAM_BOT_TOKEN" required:""`
 }
 
 func main() {
@@ -61,7 +75,7 @@ Rules:
 - Never guess file contents — always read first.
 - When you're done, say what you did in 1-2 sentences.`
 
-func run(_ *kong.Context, cli *CLI) error {
+func run(kongCtx *kong.Context, cli *CLI) error {
 	level := slog.LevelWarn
 	if cli.Verbose {
 		level = slog.LevelDebug
@@ -74,24 +88,10 @@ func run(_ *kong.Context, cli *CLI) error {
 	}
 
 	model := cli.Model
-	if model == "" && cfg.Providers.Anthropic != nil {
-		model = cfg.Providers.Anthropic.DefaultModel
-	}
 	if model == "" {
-		model = "claude-sonnet-4-20250514"
+		model = resolveModel(cfg)
 	}
 
-	provider, err := createProvider(cfg, model)
-	if err != nil {
-		return err
-	}
-
-	cost := llm.NewCostTracker()
-	if cfg.Cost.DailyBudget > 0 {
-		cost.SetDailyLimit(cfg.Cost.DailyBudget)
-	}
-
-	// Register built-in tools.
 	cwd, _ := os.Getwd()
 	registry := tool.DefaultRegistry(cwd)
 
@@ -112,7 +112,7 @@ func run(_ *kong.Context, cli *CLI) error {
 	}
 
 	approvalFn := func(call t.ToolCall, reason string) bool {
-		fmt.Fprintf(os.Stderr, "\n%s⚠ Tool %q requires approval (%s)%s\n", "\033[33m", call.Name, reason, "\033[0m")
+		fmt.Fprintf(os.Stderr, "\n\033[33m⚠ Tool %q requires approval (%s)\033[0m\n", call.Name, reason)
 		fmt.Fprintf(os.Stderr, "  Arguments: %s\n", string(call.Arguments))
 		fmt.Fprintf(os.Stderr, "Allow? [y/N] ")
 		var response string
@@ -122,27 +122,44 @@ func run(_ *kong.Context, cli *CLI) error {
 
 	safetyChecker := security.NewSafetyChecker(safetyCfg, registry.Defs(), approvalFn)
 
+	cost := llm.NewCostTracker()
+	if cfg.Cost.DailyBudget > 0 {
+		cost.SetDailyLimit(cfg.Cost.DailyBudget)
+	}
+
+	switch kongCtx.Command() {
+	case "serve":
+		return runServe(cli, cfg, model, logger, registry, safetyChecker, cost, agentCfg)
+	case "telegram":
+		return runTelegram(cli, cfg, model, logger, registry, safetyChecker, cost, agentCfg)
+	default:
+		return runChat(cli, cfg, model, logger, registry, safetyChecker, cost, agentCfg)
+	}
+}
+
+func runChat(cli *CLI, cfg *config.Config, model string, logger *slog.Logger,
+	registry *tool.Registry, safety *security.SafetyChecker, cost *llm.CostTracker, agentCfg agent.AgentConfig) error {
+
+	provider, err := createProvider(cfg, model)
+	if err != nil {
+		return err
+	}
+
 	a := agent.New(
-		provider,
-		agentCfg,
-		registry.Executors(),
-		registry.Defs(),
+		provider, agentCfg,
+		registry.Executors(), registry.Defs(),
 		agent.WithLogger(logger),
 		agent.WithCostTracker(cost),
-		agent.WithSafety(safetyChecker),
+		agent.WithSafety(safety),
 		agent.WithStreamHandler(streamHandler()),
 	)
 
-	// Interactive mode.
-	chatCmd := cli.Chat
-	if len(chatCmd.Prompt) == 0 {
+	if len(cli.Chat.Prompt) == 0 {
 		sess := terminal.NewSession(a, cost, model, defaultSoul)
 		return sess.Run(context.Background())
 	}
 
-	// Single-shot mode.
-	prompt := strings.Join(chatCmd.Prompt, " ")
-
+	prompt := strings.Join(cli.Chat.Prompt, " ")
 	runCtx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
@@ -162,6 +179,100 @@ func run(_ *kong.Context, cli *CLI) error {
 		return result.Error
 	}
 	return nil
+}
+
+func runServe(cli *CLI, cfg *config.Config, model string, logger *slog.Logger,
+	registry *tool.Registry, safety *security.SafetyChecker, cost *llm.CostTracker, agentCfg agent.AgentConfig) error {
+
+	provider, err := createProvider(cfg, model)
+	if err != nil {
+		return err
+	}
+
+	db, err := openStore()
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+
+	srv := server.New(server.Config{
+		Addr:     cli.Serve.Addr,
+		Provider: provider,
+		Model:    model,
+		Soul:     defaultSoul,
+		AgentCfg: agentCfg,
+		Registry: registry,
+		Safety:   safety,
+		Cost:     cost,
+		Store:    db,
+		Logger:   logger,
+	})
+
+	fmt.Fprintf(os.Stderr, "\033[1m\033[36mLiteClaw server running at http://localhost%s\033[0m\n", cli.Serve.Addr)
+	return srv.ListenAndServe(ctx)
+}
+
+func runTelegram(cli *CLI, cfg *config.Config, model string, logger *slog.Logger,
+	registry *tool.Registry, safety *security.SafetyChecker, cost *llm.CostTracker, agentCfg agent.AgentConfig) error {
+
+	provider, err := createProvider(cfg, model)
+	if err != nil {
+		return err
+	}
+
+	db, err := openStore()
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+
+	bot := tgbot.NewBot(tgbot.BotConfig{
+		Token:    cli.Telegram.Token,
+		Provider: provider,
+		Model:    model,
+		Soul:     defaultSoul,
+		AgentCfg: agentCfg,
+		Registry: registry,
+		Safety:   safety,
+		Cost:     cost,
+		Store:    db,
+		Logger:   logger,
+	})
+
+	return bot.Run(ctx)
+}
+
+func openStore() (*store.SQLiteStore, error) {
+	home, _ := os.UserHomeDir()
+	dbPath := filepath.Join(home, ".liteclaw", "liteclaw.db")
+	return store.NewSQLite(dbPath)
+}
+
+func resolveModel(cfg *config.Config) string {
+	switch cfg.Providers.Default {
+	case "anthropic", "":
+		if cfg.Providers.Anthropic != nil && cfg.Providers.Anthropic.DefaultModel != "" {
+			return cfg.Providers.Anthropic.DefaultModel
+		}
+		return "claude-sonnet-4-20250514"
+	case "openai":
+		if cfg.Providers.OpenAI != nil && cfg.Providers.OpenAI.DefaultModel != "" {
+			return cfg.Providers.OpenAI.DefaultModel
+		}
+		return "gpt-4o"
+	case "ollama":
+		if cfg.Providers.Ollama != nil && cfg.Providers.Ollama.DefaultModel != "" {
+			return cfg.Providers.Ollama.DefaultModel
+		}
+		return "llama3.1"
+	}
+	return "claude-sonnet-4-20250514"
 }
 
 func streamHandler() func(t.StreamEvent) {
@@ -193,6 +304,29 @@ func createProvider(cfg *config.Config, model string) (t.Provider, error) {
 			return nil, fmt.Errorf("set %s environment variable", envKey)
 		}
 		return llm.NewAnthropicProvider(apiKey, model), nil
+
+	case "openai":
+		envKey := "OPENAI_API_KEY"
+		if cfg.Providers.OpenAI != nil && cfg.Providers.OpenAI.APIKeyEnv != "" {
+			envKey = cfg.Providers.OpenAI.APIKeyEnv
+		}
+		apiKey := os.Getenv(envKey)
+		if apiKey == "" {
+			return nil, fmt.Errorf("set %s environment variable", envKey)
+		}
+		baseURL := ""
+		if cfg.Providers.OpenAI != nil {
+			baseURL = cfg.Providers.OpenAI.BaseURL
+		}
+		return llm.NewOpenAIProvider(apiKey, baseURL, model), nil
+
+	case "ollama":
+		baseURL := ""
+		if cfg.Providers.Ollama != nil {
+			baseURL = cfg.Providers.Ollama.BaseURL
+		}
+		return llm.NewOllamaProvider(baseURL, model), nil
+
 	default:
 		return nil, fmt.Errorf("unsupported provider: %q", cfg.Providers.Default)
 	}

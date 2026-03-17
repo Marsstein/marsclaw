@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LiteClaw</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--surface:#161b22;--border:#30363d;--text:#e6edf3;--dim:#8b949e;--accent:#58a6ff;--green:#3fb950;--yellow:#d29922;--red:#f85149}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex}
+.sidebar{width:260px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-header{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.sidebar-header h1{font-size:16px;font-weight:600}
+.sidebar-header .logo{font-size:20px}
+#new-chat{background:var(--accent);color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px;margin-left:auto}
+#new-chat:hover{opacity:.85}
+.session-list{flex:1;overflow-y:auto;padding:8px}
+.session-item{padding:10px 12px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:8px}
+.session-item:hover{background:var(--border)}
+.session-item.active{background:var(--border);color:var(--text)}
+.session-item .del{margin-left:auto;opacity:0;color:var(--red);cursor:pointer;padding:2px 6px}
+.session-item:hover .del{opacity:1}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.messages{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:16px}
+.msg{max-width:720px;width:100%;margin:0 auto;line-height:1.6}
+.msg.user{background:var(--surface);padding:12px 16px;border-radius:12px}
+.msg.assistant{padding:0 16px}
+.msg.assistant pre{background:var(--surface);padding:12px;border-radius:8px;overflow-x:auto;font-size:13px;margin:8px 0}
+.msg.assistant code{font-size:13px;background:var(--surface);padding:2px 6px;border-radius:4px}
+.msg.assistant pre code{background:none;padding:0}
+.msg .tool-badge{display:inline-block;background:var(--border);color:var(--yellow);padding:2px 8px;border-radius:4px;font-size:12px;margin:2px 4px 2px 0}
+.cost-line{text-align:center;color:var(--dim);font-size:12px;padding:8px}
+.input-area{border-top:1px solid var(--border);padding:16px 24px}
+.input-wrap{max-width:720px;margin:0 auto;display:flex;gap:8px}
+#prompt{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:12px 16px;border-radius:12px;font-size:14px;resize:none;font-family:inherit;min-height:48px;max-height:200px}
+#prompt:focus{outline:none;border-color:var(--accent)}
+#send{background:var(--accent);color:#fff;border:none;padding:12px 20px;border-radius:12px;cursor:pointer;font-size:14px;font-weight:500}
+#send:disabled{opacity:.4;cursor:not-allowed}
+.empty{flex:1;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:18px}
+@media(max-width:768px){.sidebar{display:none}.input-wrap{padding:0}}
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="sidebar-header">
+    <span class="logo">&#9889;</span>
+    <h1>LiteClaw</h1>
+    <button id="new-chat">+ New</button>
+  </div>
+  <div class="session-list" id="sessions"></div>
+</div>
+<div class="main">
+  <div class="messages" id="messages">
+    <div class="empty">Start a conversation</div>
+  </div>
+  <div class="input-area">
+    <div class="input-wrap">
+      <textarea id="prompt" rows="1" placeholder="Message LiteClaw..." autofocus></textarea>
+      <button id="send">Send</button>
+    </div>
+  </div>
+</div>
+<script>
+const API = '/api';
+let currentSession = null;
+let sending = false;
+
+const $sessions = document.getElementById('sessions');
+const $messages = document.getElementById('messages');
+const $prompt = document.getElementById('prompt');
+const $send = document.getElementById('send');
+const $newChat = document.getElementById('new-chat');
+
+// Auto-resize textarea
+$prompt.addEventListener('input', () => {
+  $prompt.style.height = 'auto';
+  $prompt.style.height = Math.min($prompt.scrollHeight, 200) + 'px';
+});
+
+$prompt.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+$send.addEventListener('click', sendMessage);
+$newChat.addEventListener('click', createSession);
+
+async function createSession() {
+  const res = await fetch(`${API}/sessions`, { method: 'POST' });
+  const sess = await res.json();
+  currentSession = sess.id;
+  loadSessions();
+  $messages.innerHTML = '<div class="empty">Start a conversation</div>';
+  $prompt.focus();
+}
+
+async function loadSessions() {
+  const res = await fetch(`${API}/sessions`);
+  const sessions = await res.json();
+  $sessions.innerHTML = '';
+  for (const s of sessions) {
+    const div = document.createElement('div');
+    div.className = 'session-item' + (s.id === currentSession ? ' active' : '');
+    div.innerHTML = `<span>${esc(s.title || 'New conversation')}</span><span class="del" title="Delete">&times;</span>`;
+    div.querySelector('span').addEventListener('click', () => loadSession(s.id));
+    div.querySelector('.del').addEventListener('click', async (e) => {
+      e.stopPropagation();
+      await fetch(`${API}/sessions/${s.id}`, { method: 'DELETE' });
+      if (currentSession === s.id) { currentSession = null; $messages.innerHTML = '<div class="empty">Start a conversation</div>'; }
+      loadSessions();
+    });
+    $sessions.appendChild(div);
+  }
+}
+
+async function loadSession(id) {
+  currentSession = id;
+  loadSessions();
+  const res = await fetch(`${API}/sessions/${id}`);
+  const data = await res.json();
+  renderMessages(data.messages || []);
+}
+
+function renderMessages(msgs) {
+  $messages.innerHTML = '';
+  for (const m of msgs) {
+    if (m.role === 'system') continue;
+    if (m.role === 'tool') {
+      const div = document.createElement('div');
+      div.className = 'msg assistant';
+      div.innerHTML = `<span class="tool-badge">${esc(m.tool_result?.call_id || 'tool')}</span>`;
+      $messages.appendChild(div);
+      continue;
+    }
+    appendMsg(m.role, m.content || '', m.tool_calls);
+  }
+  scrollBottom();
+}
+
+function appendMsg(role, content, toolCalls) {
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  if (role === 'assistant') {
+    div.innerHTML = formatMarkdown(content);
+    if (toolCalls) {
+      for (const tc of toolCalls) {
+        div.innerHTML = `<span class="tool-badge">${esc(tc.name)}</span>` + div.innerHTML;
+      }
+    }
+  } else {
+    div.textContent = content;
+  }
+  // Remove empty state
+  const empty = $messages.querySelector('.empty');
+  if (empty) empty.remove();
+  $messages.appendChild(div);
+  scrollBottom();
+  return div;
+}
+
+async function sendMessage() {
+  const text = $prompt.value.trim();
+  if (!text || sending) return;
+  if (!currentSession) await createSession();
+
+  sending = true;
+  $send.disabled = true;
+  $prompt.value = '';
+  $prompt.style.height = 'auto';
+
+  appendMsg('user', text);
+  const assistantDiv = appendMsg('assistant', '');
+
+  try {
+    const res = await fetch(`${API}/sessions/${currentSession}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text })
+    });
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let fullText = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6);
+        if (data === '[DONE]') continue;
+
+        try {
+          const ev = JSON.parse(data);
+          if (ev.type === 'text') {
+            fullText += ev.delta;
+            assistantDiv.innerHTML = formatMarkdown(fullText);
+            scrollBottom();
+          } else if (ev.type === 'tool_start' && ev.tool_call) {
+            const badge = document.createElement('span');
+            badge.className = 'tool-badge';
+            badge.textContent = ev.tool_call.name;
+            assistantDiv.prepend(badge);
+          } else if (ev.cost) {
+            const costDiv = document.createElement('div');
+            costDiv.className = 'cost-line';
+            costDiv.textContent = ev.cost;
+            $messages.appendChild(costDiv);
+          }
+        } catch {}
+      }
+    }
+  } catch (err) {
+    assistantDiv.innerHTML = `<span style="color:var(--red)">Error: ${esc(err.message)}</span>`;
+  }
+
+  sending = false;
+  $send.disabled = false;
+  $prompt.focus();
+  loadSessions();
+}
+
+function formatMarkdown(text) {
+  if (!text) return '';
+  return esc(text)
+    .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function scrollBottom() { $messages.scrollTop = $messages.scrollHeight; }
+
+// Init
+loadSessions();
+</script>
+</body>
+</html>

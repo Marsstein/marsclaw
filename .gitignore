@@ -22,5 +22,8 @@ Thumbs.db
 *.pem
 *.key
 
+# Private deploy configs (Marsstein-specific)
+deploy/config.production.yaml
+
 # Go
 vendor/

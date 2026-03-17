@@ -2,7 +2,7 @@
 # Copy to ~/.marsclaw/config.yaml
 
 providers:
-  # Gemini default — burns GCP credits, not a separate bill
+  # Pick your default provider
   default: gemini
   gemini:
     api_key_env: GEMINI_API_KEY
@@ -28,86 +28,31 @@ agent:
 
 cost:
   inline_display: true
-  daily_budget: 50.00
+  daily_budget: 10.00
 
 security:
   strict_approval: false
   scan_credentials: true
   path_traversal_guard: true
   allowed_dirs:
-    - /home/deploy/marsstein
+    - /home/user/projects
 
-# Scheduled tasks — your overnight workers
-scheduler:
-  tasks:
-    # --- Dev Squad ---
-    - name: pr-review
-      schedule: "0 9,14 * * 1-5"
-      prompt: |
-        Review all open PRs across Marsstein repos using shell commands:
-        gh pr list --repo Marsstein/marsstein-app --state open --json number,title
-        For each PR, run gh pr diff and post a code review comment.
-        Focus on security, performance, and code quality.
-      channel: slack
-      enabled: true
+# MCP servers (optional)
+# mcp:
+#   - name: filesystem
+#     command: npx
+#     args: ["-y", "@modelcontextprotocol/server-filesystem", "/home/user"]
 
-    - name: security-scan
-      schedule: "0 2 * * *"
-      prompt: |
-        Check for security vulnerabilities:
-        gh api repos/Marsstein/marsstein-app/dependabot/alerts --jq '.[].security_advisory.summary'
-        If any critical alerts found, post to Slack immediately.
-      channel: slack
-      enabled: true
-
-    - name: ci-doctor
-      schedule: "0 */4 * * *"
-      prompt: |
-        Check CI status for all Marsstein repos:
-        gh run list --repo Marsstein/marsstein-app --limit 5 --json status,conclusion,name
-        If any failed, diagnose why using gh run view and suggest fixes.
-      channel: slack
-      enabled: true
-
-    # --- Compliance Squad ---
-    - name: compliance-monitor
-      schedule: "0 6 * * *"
-      prompt: |
-        Check EU regulatory feeds for GDPR and AI Act updates.
-        Use curl to fetch RSS feeds from edpb.europa.eu and eur-lex.europa.eu.
-        Summarize any new rulings, guidelines, or enforcement actions.
-      channel: slack
-      enabled: true
-
-    # --- Marketing Squad ---
-    - name: weekly-content
-      schedule: "0 3 * * 1"
-      prompt: |
-        Generate 5 LinkedIn post ideas about AI compliance for this week.
-        Each post should include: hook, body, CTA, and 3 relevant hashtags.
-        Save to /home/deploy/marsstein/content/weekly/
-      channel: log
-      enabled: true
-
-    - name: competitor-watch
-      schedule: "0 4 * * 3"
-      prompt: |
-        Monitor competitor activity using shell:
-        npx playwright screenshot https://liteclaw.ai --full-page -o /tmp/liteclaw-latest.png
-        curl -s https://liteclaw.ai | grep -i 'pricing\|enterprise\|new\|launch'
-        Compare with last week and report changes.
-      channel: slack
-      enabled: true
-
-    # --- Daily Briefing ---
-    - name: morning-briefing
-      schedule: "0 8 * * 1-5"
-      prompt: |
-        Generate morning briefing for the team:
-        1. git log --oneline --since='1 day ago' across all Marsstein repos
-        2. gh issue list --state open --label bug
-        3. gh pr list --state open
-        4. Any failed CI runs
-        Format as a clean summary.
-      channel: slack
-      enabled: true
+# Scheduled tasks (optional)
+# scheduler:
+#   tasks:
+#     - name: morning-summary
+#       schedule: "0 9 * * 1-5"
+#       prompt: "Summarize yesterday's git activity"
+#       channel: log
+#       enabled: true
+#     - name: security-scan
+#       schedule: "0 2 * * *"
+#       prompt: "Check for dependency vulnerabilities"
+#       channel: log
+#       enabled: true

@@ -144,75 +144,19 @@ security:
   allowed_dirs:
     - /home/deploy
 
-scheduler:
-  tasks:
-    # Dev Squad
-    - name: pr-review
-      schedule: "0 9,14 * * 1-5"
-      prompt: |
-        Review all open PRs across Marsstein repos:
-        gh pr list --repo Marsstein/marsstein-app --state open --json number,title
-        For each, run gh pr diff and post a review comment.
-      channel: slack
-      enabled: true
-
-    - name: security-scan
-      schedule: "0 2 * * *"
-      prompt: |
-        Check for vulnerabilities:
-        gh api repos/Marsstein/marsstein-app/dependabot/alerts --jq '.[].security_advisory.summary'
-        Post critical alerts to Slack.
-      channel: slack
-      enabled: true
-
-    - name: ci-doctor
-      schedule: "0 */4 * * *"
-      prompt: |
-        Check CI status:
-        gh run list --repo Marsstein/marsstein-app --limit 5 --json status,conclusion,name
-        Diagnose any failures.
-      channel: slack
-      enabled: true
-
-    # Compliance Squad
-    - name: compliance-monitor
-      schedule: "0 6 * * *"
-      prompt: |
-        Check EU regulatory feeds for GDPR and AI Act updates.
-        Fetch RSS from edpb.europa.eu via curl. Summarize new items.
-      channel: slack
-      enabled: true
-
-    # Marketing Squad
-    - name: weekly-content
-      schedule: "0 3 * * 1"
-      prompt: |
-        Generate 5 LinkedIn post ideas about AI compliance.
-        Include hook, body, CTA, and hashtags.
-        Save to /home/deploy/content/weekly/
-      channel: log
-      enabled: true
-
-    - name: competitor-watch
-      schedule: "0 4 * * 3"
-      prompt: |
-        Check competitor sites for changes:
-        curl -s https://liteclaw.ai | grep -i 'pricing\|enterprise\|new\|launch'
-        Report any changes.
-      channel: slack
-      enabled: true
-
-    # Daily Briefing
-    - name: morning-briefing
-      schedule: "0 8 * * 1-5"
-      prompt: |
-        Morning briefing:
-        1. gh pr list --state open across Marsstein repos
-        2. gh issue list --state open --label bug
-        3. gh run list --limit 3 (any failures?)
-        Format as a clean daily summary.
-      channel: slack
-      enabled: true
+# Uncomment and customize scheduled tasks:
+# scheduler:
+#   tasks:
+#     - name: morning-summary
+#       schedule: "0 9 * * 1-5"
+#       prompt: "Summarize yesterday's git activity"
+#       channel: log
+#       enabled: true
+#     - name: security-scan
+#       schedule: "0 2 * * *"
+#       prompt: "Check for dependency vulnerabilities using gh CLI"
+#       channel: log
+#       enabled: true
 CONFIG
     ok "Default config created"
 else

@@ -1,0 +1,47 @@
+run:
+  timeout: 5m
+  go: '1.23'
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - unused
+    - gosimple
+    - ineffassign
+    - typecheck
+    - gocritic
+    - gofumpt
+    - misspell
+    - prealloc
+    - unconvert
+    - unparam
+    - nilerr
+
+linters-settings:
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - performance
+    disabled-checks:
+      - hugeParam
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment
+  gofumpt:
+    extra-rules: true
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - errcheck
+        - unparam
+  max-issues-per-linter: 50
+  max-same-issues: 10
+
+output:
+  formats:
+    - format: colored-line-number

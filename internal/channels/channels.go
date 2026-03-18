@@ -10,15 +10,16 @@ import (
 // Channel represents a configured messaging channel.
 type Channel struct {
 	ID       string `json:"id"`
-	Provider string `json:"provider"` // telegram, discord, slack, whatsapp
+	Provider string `json:"provider"` // telegram, discord, slack, whatsapp, instagram
 	Name     string `json:"name"`
 	Token    string `json:"token,omitempty"`
 	BotToken string `json:"bot_token,omitempty"` // slack
 	AppToken string `json:"app_token,omitempty"` // slack
-	// WhatsApp fields
+	// WhatsApp / Instagram fields (shared Meta platform)
 	PhoneNumberID string `json:"phone_number_id,omitempty"`
 	AccessToken   string `json:"access_token,omitempty"`
 	VerifyToken   string `json:"verify_token,omitempty"`
+	PageID        string `json:"page_id,omitempty"`        // instagram
 	Enabled       bool   `json:"enabled"`
 }
 
@@ -28,6 +29,7 @@ var SupportedProviders = []ProviderInfo{
 	{ID: "discord", Name: "Discord", Method: "Bot API", TokenLabel: "Bot token", TokenEnv: "DISCORD_BOT_TOKEN"},
 	{ID: "slack", Name: "Slack", Method: "Socket Mode", TokenLabel: "Bot token (xoxb-)", TokenEnv: "SLACK_BOT_TOKEN"},
 	{ID: "whatsapp", Name: "WhatsApp", Method: "Cloud API", TokenLabel: "Access token", TokenEnv: ""},
+	{ID: "instagram", Name: "Instagram", Method: "Messenger API", TokenLabel: "Page access token", TokenEnv: "INSTAGRAM_ACCESS_TOKEN"},
 }
 
 // ProviderInfo describes a supported channel provider.

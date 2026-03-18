@@ -114,7 +114,8 @@ func (s *Server) newAgent() *agent.Agent {
 }
 
 func (s *Server) handleUI(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
+	// Serve the UI at / and /app (for nginx reverse proxy).
+	if r.URL.Path != "/" && r.URL.Path != "/app" && r.URL.Path != "/app/" {
 		http.NotFound(w, r)
 		return
 	}

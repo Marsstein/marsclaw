@@ -151,6 +151,42 @@ func RunAdd(store *Store) error {
 		name := prompt(reader, "  Channel name [default]: ", "default")
 		ch.Name = name
 		ch.ID = "whatsapp-" + name
+
+	case "instagram":
+		fmt.Println("  ┌─────────────────────────────────────────────────────┐")
+		fmt.Println("  │ 1) Go to developers.facebook.com → Create App      │")
+		fmt.Println("  │ 2) Add Instagram product (Messenger API)           │")
+		fmt.Println("  │ 3) Connect Instagram Professional account          │")
+		fmt.Println("  │ 4) Generate Page Access Token (long-lived)         │")
+		fmt.Println("  │ 5) Subscribe to messages webhook                   │")
+		fmt.Println("  │ 6) Webhook URL: https://your-domain/webhook/ig     │")
+		fmt.Println("  │                                                     │")
+		fmt.Println("  │ Requires: Instagram Professional/Business account  │")
+		fmt.Println("  │ Tip: set INSTAGRAM_ACCESS_TOKEN in env             │")
+		fmt.Println("  └─────────────────────────────────────────────────────┘")
+		fmt.Println()
+
+		token := os.Getenv("INSTAGRAM_ACCESS_TOKEN")
+		if token != "" {
+			fmt.Printf("  Found INSTAGRAM_ACCESS_TOKEN in environment.\n")
+			if confirm(reader, "  Use it?") {
+				ch.AccessToken = token
+			}
+		}
+		if ch.AccessToken == "" {
+			ch.AccessToken = prompt(reader, "  \033[33mEnter Page Access Token:\033[0m ", "")
+			if ch.AccessToken == "" {
+				fmt.Println("  Aborted.")
+				return nil
+			}
+		}
+
+		ch.PageID = prompt(reader, "  \033[33mEnter Instagram Page ID:\033[0m ", "")
+		ch.VerifyToken = prompt(reader, "  Enter Verify Token (for webhook): ", "marsclaw-verify")
+
+		name := prompt(reader, "  Channel name [default]: ", "default")
+		ch.Name = name
+		ch.ID = "instagram-" + name
 	}
 
 	if err := store.Add(ch); err != nil {
@@ -173,6 +209,9 @@ func RunAdd(store *Store) error {
 	case "whatsapp":
 		fmt.Printf("  Mount webhook:  marsclaw serve\n")
 		fmt.Printf("  Webhook URL:    https://your-domain/webhook/whatsapp\n\n")
+	case "instagram":
+		fmt.Printf("  Mount webhook:  marsclaw serve\n")
+		fmt.Printf("  Webhook URL:    https://your-domain/webhook/ig\n\n")
 	}
 
 	return nil
@@ -208,6 +247,8 @@ func RunList(store *Store) error {
 			token = maskToken(ch.BotToken)
 		case "whatsapp":
 			token = ch.PhoneNumberID
+		case "instagram":
+			token = maskToken(ch.AccessToken)
 		}
 
 		fmt.Printf("  %s  %-12s %-15s %s\n", status, ch.Provider, ch.Name, token)

@@ -153,6 +153,16 @@ func RunWizard() error {
 		}
 	}
 
+	n8nMCP := prompt(reader, "  Add n8n MCP? (workflow automation, 400+ integrations) [y/N]: ", "n")
+	if strings.EqualFold(n8nMCP, "y") || strings.EqualFold(n8nMCP, "yes") {
+		n8nURL := prompt(reader, "  n8n webhook URL (e.g. http://localhost:5678): ", "http://localhost:5678")
+		if n8nURL != "" {
+			mcpConfigs = append(mcpConfigs, fmt.Sprintf(`  - name: n8n
+    command: npx
+    args: ["-y", "n8n-mcp-server", "--url", "%s"]`, n8nURL))
+		}
+	}
+
 	customMCP := prompt(reader, "  Add a custom MCP server? [y/N]: ", "n")
 	if strings.EqualFold(customMCP, "y") || strings.EqualFold(customMCP, "yes") {
 		mcpName := prompt(reader, "  MCP server name: ", "custom")

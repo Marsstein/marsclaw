@@ -21,6 +21,7 @@ import (
 	"github.com/marsstein/marsclaw/internal/memory"
 	"github.com/marsstein/marsclaw/internal/scheduler"
 	"github.com/marsstein/marsclaw/internal/security"
+	"github.com/marsstein/marsclaw/internal/skills"
 	"github.com/marsstein/marsclaw/internal/server"
 	"github.com/marsstein/marsclaw/internal/setup"
 	"github.com/marsstein/marsclaw/internal/slack"
@@ -49,6 +50,7 @@ type CLI struct {
 	Discord  DiscordCmd  `cmd:"" help:"Run as a Discord bot."`
 	Slack    SlackCmd    `cmd:"" help:"Run as a Slack bot."`
 	Channels ChannelsCmd `cmd:"" help:"Manage chat channels (Telegram, Discord, Slack, WhatsApp)."`
+	Skills   SkillsCmd   `cmd:"" help:"Manage agent skills (prompt packs)."`
 	Init     InitCmd     `cmd:"" help:"Interactive setup wizard."`
 }
 
@@ -83,6 +85,20 @@ type ChannelsAddCmd struct{}
 type ChannelsListCmd struct{}
 type ChannelsRemoveCmd struct {
 	ID string `arg:"" optional:"" help:"Channel ID to remove."`
+}
+
+type SkillsCmd struct {
+	List    SkillsListCmd    `cmd:"" default:"withargs" help:"List available and installed skills."`
+	Install SkillsInstallCmd `cmd:"" help:"Install a skill by name or URL."`
+	Use     SkillsUseCmd     `cmd:"" help:"Set the active skill."`
+}
+
+type SkillsListCmd struct{}
+type SkillsInstallCmd struct {
+	Source string `arg:"" help:"Built-in skill ID or URL to a SOUL.md file."`
+}
+type SkillsUseCmd struct {
+	ID string `arg:"" help:"Skill ID to activate."`
 }
 
 type InitCmd struct{}
@@ -199,6 +215,9 @@ func run(kongCtx *kong.Context, cli *CLI) error {
 	soulPrompt, agentPrompt := agent.DiscoverProjectPrompts(cwd)
 	if soulPrompt != "" {
 		logger.Info("discovered SOUL.md")
+	} else if skillPrompt := skills.GetActivePrompt(); skillPrompt != "" {
+		soulPrompt = skillPrompt
+		logger.Info("using active skill", "skill", skills.GetActive())
 	} else {
 		soulPrompt = defaultSoul
 	}
@@ -212,6 +231,12 @@ func run(kongCtx *kong.Context, cli *CLI) error {
 		return channels.RunList(channels.NewStore())
 	case "channels remove", "channels remove <id>":
 		return channels.RunRemove(channels.NewStore(), cli.Channels.Remove.ID)
+	case "skills list", "skills":
+		return skills.RunList()
+	case "skills install <source>":
+		return skills.RunInstall(cli.Skills.Install.Source)
+	case "skills use <id>":
+		return skills.RunUse(cli.Skills.Use.ID)
 	case "serve":
 		return runServe(cli, cfg, model, logger, registry, safetyChecker, cost, agentCfg, soulPrompt, agentPrompt)
 	case "telegram":

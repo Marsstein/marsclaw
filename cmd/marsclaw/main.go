@@ -313,6 +313,18 @@ func runServe(cli *CLI, cfg *config.Config, model string, logger *slog.Logger,
 		})
 	}
 
+	// Build task info for dashboard.
+	var tasks []server.TaskInfo
+	for _, tc := range cfg.Scheduler.Tasks {
+		tasks = append(tasks, server.TaskInfo{
+			ID:       tc.ID,
+			Name:     tc.Name,
+			Schedule: tc.Schedule,
+			Channel:  tc.Channel,
+			Enabled:  tc.Enabled,
+		})
+	}
+
 	srv := server.New(server.Config{
 		Addr:     cli.Serve.Addr,
 		Provider: provider,
@@ -324,6 +336,7 @@ func runServe(cli *CLI, cfg *config.Config, model string, logger *slog.Logger,
 		Cost:     cost,
 		Store:    db,
 		Logger:   logger,
+		Tasks:    tasks,
 	})
 
 	if waBot != nil {

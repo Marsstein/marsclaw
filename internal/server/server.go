@@ -29,6 +29,16 @@ type Config struct {
 	Cost     t.CostRecorder
 	Store    store.Store
 	Logger   *slog.Logger
+	Tasks    []TaskInfo // scheduler tasks for dashboard
+}
+
+// TaskInfo is a read-only view of a scheduled task for the API.
+type TaskInfo struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Schedule string `json:"schedule"`
+	Channel  string `json:"channel"`
+	Enabled  bool   `json:"enabled"`
 }
 
 // Server serves the HTTP API and Web UI.
@@ -58,6 +68,7 @@ func New(cfg Config) *Server {
 	s.mux.HandleFunc("DELETE /api/sessions/{id}", s.handleDeleteSession)
 	s.mux.HandleFunc("POST /api/sessions/{id}/messages", s.handleSendMessage)
 	s.mux.HandleFunc("GET /api/config", s.handleGetConfig)
+	s.mux.HandleFunc("GET /api/scheduler/tasks", s.handleListTasks)
 	s.mux.HandleFunc("GET /api/channels", s.handleListChannels)
 	s.mux.HandleFunc("DELETE /api/channels/{id}", s.handleDeleteChannel)
 
@@ -265,9 +276,18 @@ func (s *Server) handleSendMessage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]string{
+	writeJSON(w, http.StatusOK, map[string]any{
 		"model": s.cfg.Model,
+		"tasks": len(s.cfg.Tasks),
 	})
+}
+
+func (s *Server) handleListTasks(w http.ResponseWriter, r *http.Request) {
+	tasks := s.cfg.Tasks
+	if tasks == nil {
+		tasks = []TaskInfo{}
+	}
+	writeJSON(w, http.StatusOK, tasks)
 }
 
 func (s *Server) handleListChannels(w http.ResponseWriter, r *http.Request) {

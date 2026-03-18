@@ -1,4 +1,6 @@
 # Binaries
+/marsclaw
+/marsclaw-slim
 bin/
 dist/
 *.exe
@@ -24,6 +26,7 @@ Thumbs.db
 
 # Private deploy configs (Marsstein-specific)
 deploy/config.production.yaml
+deploy/landing/
 
 # Go
 vendor/

@@ -13,11 +13,26 @@ type ModelPricing struct {
 
 // Known model pricing (microdollars per million tokens).
 var defaultPricing = map[string]ModelPricing{
+	// Anthropic
 	"claude-sonnet-4-20250514":    {InputPerMToken: 3_000_000, OutputPerMToken: 15_000_000},
 	"claude-haiku-4-20250514":     {InputPerMToken: 800_000, OutputPerMToken: 4_000_000},
 	"claude-opus-4-20250514":      {InputPerMToken: 15_000_000, OutputPerMToken: 75_000_000},
+	// OpenAI
 	"gpt-4o":                      {InputPerMToken: 2_500_000, OutputPerMToken: 10_000_000},
 	"gpt-4o-mini":                 {InputPerMToken: 150_000, OutputPerMToken: 600_000},
+	// Google Gemini
+	"gemini-2.5-flash":            {InputPerMToken: 150_000, OutputPerMToken: 600_000},
+	"gemini-2.5-pro":              {InputPerMToken: 1_250_000, OutputPerMToken: 10_000_000},
+	"gemini-2.0-flash":            {InputPerMToken: 75_000, OutputPerMToken: 300_000},
+	"gemini-1.5-flash":            {InputPerMToken: 75_000, OutputPerMToken: 300_000},
+	"gemini-1.5-pro":              {InputPerMToken: 1_250_000, OutputPerMToken: 5_000_000},
+	// Ollama (free, local)
+	"llama3.1":                    {InputPerMToken: 0, OutputPerMToken: 0},
+	"llama3.2":                    {InputPerMToken: 0, OutputPerMToken: 0},
+	"mistral":                     {InputPerMToken: 0, OutputPerMToken: 0},
+	"qwen2.5-coder":               {InputPerMToken: 0, OutputPerMToken: 0},
+	"deepseek-r1":                 {InputPerMToken: 0, OutputPerMToken: 0},
+	"codellama":                   {InputPerMToken: 0, OutputPerMToken: 0},
 }
 
 // CostTracker tracks cumulative costs in microdollars.

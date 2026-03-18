@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/marsstein/marsclaw/internal/agent"
+	"github.com/marsstein/marsclaw/internal/channels"
 	"github.com/marsstein/marsclaw/internal/llm"
 	"github.com/marsstein/marsclaw/internal/security"
 	"github.com/marsstein/marsclaw/internal/store"
@@ -56,6 +57,9 @@ func New(cfg Config) *Server {
 	s.mux.HandleFunc("GET /api/sessions/{id}", s.handleGetSession)
 	s.mux.HandleFunc("DELETE /api/sessions/{id}", s.handleDeleteSession)
 	s.mux.HandleFunc("POST /api/sessions/{id}/messages", s.handleSendMessage)
+	s.mux.HandleFunc("GET /api/config", s.handleGetConfig)
+	s.mux.HandleFunc("GET /api/channels", s.handleListChannels)
+	s.mux.HandleFunc("DELETE /api/channels/{id}", s.handleDeleteChannel)
 
 	return s
 }
@@ -258,6 +262,50 @@ func (s *Server) handleSendMessage(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, "data: [DONE]\n\n")
 	flusher.Flush()
+}
+
+func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]string{
+		"model": s.cfg.Model,
+	})
+}
+
+func (s *Server) handleListChannels(w http.ResponseWriter, r *http.Request) {
+	cs := channels.NewStore()
+	list, err := cs.List()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if list == nil {
+		list = []channels.Channel{}
+	}
+
+	// Mask tokens for security.
+	safe := make([]map[string]any, len(list))
+	for i, ch := range list {
+		safe[i] = map[string]any{
+			"id":       ch.ID,
+			"provider": ch.Provider,
+			"name":     ch.Name,
+			"enabled":  ch.Enabled,
+		}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"channels":  safe,
+		"providers": channels.SupportedProviders,
+	})
+}
+
+func (s *Server) handleDeleteChannel(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	cs := channels.NewStore()
+	if err := cs.Remove(id); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

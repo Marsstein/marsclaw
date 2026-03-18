@@ -12,6 +12,7 @@ import (
 	"github.com/alecthomas/kong"
 
 	"github.com/marsstein/marsclaw/internal/agent"
+	"github.com/marsstein/marsclaw/internal/channels"
 	"github.com/marsstein/marsclaw/internal/config"
 	"github.com/marsstein/marsclaw/internal/discord"
 	"github.com/marsstein/marsclaw/internal/hooks"
@@ -47,6 +48,7 @@ type CLI struct {
 	Telegram TelegramCmd `cmd:"" help:"Run as a Telegram bot."`
 	Discord  DiscordCmd  `cmd:"" help:"Run as a Discord bot."`
 	Slack    SlackCmd    `cmd:"" help:"Run as a Slack bot."`
+	Channels ChannelsCmd `cmd:"" help:"Manage chat channels (Telegram, Discord, Slack, WhatsApp)."`
 	Init     InitCmd     `cmd:"" help:"Interactive setup wizard."`
 }
 
@@ -69,6 +71,18 @@ type DiscordCmd struct {
 type SlackCmd struct {
 	BotToken string `help:"Slack bot token (xoxb-)." env:"SLACK_BOT_TOKEN" required:""`
 	AppToken string `help:"Slack app token (xapp-)." env:"SLACK_APP_TOKEN"`
+}
+
+type ChannelsCmd struct {
+	Add    ChannelsAddCmd    `cmd:"" help:"Add a new channel interactively."`
+	List   ChannelsListCmd   `cmd:"" default:"withargs" help:"List configured channels."`
+	Remove ChannelsRemoveCmd `cmd:"" help:"Remove a channel."`
+}
+
+type ChannelsAddCmd struct{}
+type ChannelsListCmd struct{}
+type ChannelsRemoveCmd struct {
+	ID string `arg:"" optional:"" help:"Channel ID to remove."`
 }
 
 type InitCmd struct{}
@@ -192,6 +206,12 @@ func run(kongCtx *kong.Context, cli *CLI) error {
 	switch kongCtx.Command() {
 	case "init":
 		return setup.RunWizard()
+	case "channels add":
+		return channels.RunAdd(channels.NewStore())
+	case "channels list", "channels":
+		return channels.RunList(channels.NewStore())
+	case "channels remove", "channels remove <id>":
+		return channels.RunRemove(channels.NewStore(), cli.Channels.Remove.ID)
 	case "serve":
 		return runServe(cli, cfg, model, logger, registry, safetyChecker, cost, agentCfg, soulPrompt, agentPrompt)
 	case "telegram":
